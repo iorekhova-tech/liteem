@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Лайтуем</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap&subset=cyrillic,cyrillic-ext,latin" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#FBF5F1; --surface:#FFFFFF; --surface-2:#FDEBEF; --blush:#FCE4EA;
+  --ink:#34202A; --ink-soft:#8A6B76; --ink-faint:#B79FA9; --line:#F1DFE5;
+  --berry:#C64B77; --berry-deep:#A5385E; --coral:#F19A7E;
+  --sage:#5FA285; --sage-soft:#E4F1EB; --gold:#E0A458; --gold-soft:#FBEEDA;
+  --shadow:0 10px 30px -12px rgba(166,56,94,.28);
+  --shadow-sm:0 4px 14px -6px rgba(166,56,94,.22);
+  --r:22px; --r-sm:15px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Manrope',system-ui,sans-serif; color:var(--ink);
+  background:#EEDCE3;
+  background:radial-gradient(1200px 600px at 50% -10%, #F7DCE5 0%, #EEDCE3 55%, #E7D3DB 100%);
+  min-height:100vh; -webkit-font-smoothing:antialiased;
+}
+.app{
+  max-width:440px; margin:0 auto; min-height:100vh; background:var(--bg);
+  position:relative; overflow:hidden; box-shadow:0 0 60px -20px rgba(120,40,70,.4);
+  padding-bottom:90px;
+}
+/* ---------- header ---------- */
+.top{padding:22px 20px 8px; }
+.brandrow{display:flex;align-items:center;justify-content:space-between}
+.brand{font-family:'Unbounded';font-weight:800;font-size:22px;letter-spacing:-.5px;color:var(--berry-deep)}
+.brand span{color:var(--coral)}
+.who{display:flex;align-items:center;gap:8px;background:var(--surface);padding:5px 5px 5px 12px;border-radius:99px;box-shadow:var(--shadow-sm);cursor:pointer;font-weight:700;font-size:13px}
+.who .av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:800;font-family:'Unbounded'}
+.av.inna{background:linear-gradient(135deg,#C64B77,#F19A7E)}
+.av.katya{background:linear-gradient(135deg,#8E63C6,#C64B77)}
+.greet{margin-top:14px}
+.greet .hi{font-family:'Unbounded';font-weight:600;font-size:26px;line-height:1.1;letter-spacing:-.5px}
+.greet .date{color:var(--ink-soft);font-weight:600;font-size:13px;margin-top:4px;text-transform:capitalize}
+/* ---------- screens ---------- */
+.screen{display:none;padding:4px 16px 20px;animation:fade .35s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* ---------- bloom / progress hero ---------- */
+.hero{background:var(--surface);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);display:flex;align-items:center;gap:16px;margin-bottom:16px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:120px;height:120px;background:radial-gradient(circle,var(--blush),transparent 70%);opacity:.7}
+.ring{position:relative;width:96px;height:96px;flex:0 0 96px}
+.ring svg{transform:rotate(-90deg)}
+.ring .pct{position:absolute;inset:0;display:grid;place-items:center;flex-direction:column;text-align:center}
+.ring .pct b{font-family:'Unbounded';font-weight:700;font-size:22px;line-height:1;color:var(--berry-deep)}
+.ring .pct small{font-size:10px;color:var(--ink-soft);font-weight:700}
+.herotext{flex:1;position:relative;z-index:1}
+.herotext .t{font-weight:800;font-size:16px}
+.herotext .s{color:var(--ink-soft);font-size:13px;font-weight:600;margin-top:3px;line-height:1.35}
+.streak{display:inline-flex;align-items:center;gap:5px;margin-top:9px;background:var(--gold-soft);color:#B4791F;font-weight:800;font-size:12px;padding:5px 10px;border-radius:99px}
+/* ---------- section head ---------- */
+.sh{display:flex;align-items:center;justify-content:space-between;margin:20px 4px 10px}
+.sh h2{font-family:'Unbounded';font-weight:600;font-size:15px;margin:0;letter-spacing:-.2px}
+.sh .mini{font-size:12px;font-weight:700;color:var(--ink-faint)}
+/* ---------- cards ---------- */
+.card{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:16px;margin-bottom:12px}
+.card.pad0{padding:0;overflow:hidden}
+.cardhead{display:flex;align-items:center;gap:10px;cursor:pointer}
+.cardhead .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px;background:var(--surface-2)}
+.cardhead .tt{flex:1}
+.cardhead .tt b{font-weight:800;font-size:15px;display:block}
+.cardhead .tt small{color:var(--ink-soft);font-weight:600;font-size:12.5px}
+.chev{color:var(--ink-faint);font-weight:800;transition:.25s;font-size:13px}
+.card.open .chev{transform:rotate(90deg)}
+.done-badge{background:var(--sage-soft);color:var(--sage);font-weight:800;font-size:11px;padding:5px 9px;border-radius:99px;display:flex;align-items:center;gap:4px}
+.body{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.card.open .body{max-height:900px}
+.bodyin{padding-top:14px}
+/* meal rows */
+.meal{border-top:1px solid var(--line);padding:13px 0}
+.meal:first-child{border-top:none}
+.mealtop{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+.mealtop b{font-weight:800;font-size:14px}
+.mealtop .kcal{font-size:11px;font-weight:700;color:var(--coral);background:#FDEEE7;padding:3px 8px;border-radius:99px}
+.inrow{display:flex;gap:9px}
+.field{flex:1}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--ink-soft);margin-bottom:5px}
+.field .tgt{color:var(--ink-faint);font-weight:600}
+.gramin{display:flex;align-items:center;background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:0 10px;transition:.15s}
+.gramin:focus-within{border-color:var(--berry);background:#fff}
+.gramin input{border:none;background:none;outline:none;width:100%;padding:11px 0;font-family:'Manrope';font-weight:800;font-size:16px;color:var(--ink)}
+.gramin span{font-size:12px;font-weight:700;color:var(--ink-faint)}
+.overhint{font-size:11px;font-weight:700;color:var(--gold);margin-top:5px;display:none}
+.gramin.over{border-color:var(--gold)}
+.gramin.over + .overhint{display:block}
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:var(--surface);border-radius:99px;padding:9px 13px;font-weight:700;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px;user-select:none}
+.chip:active{transform:scale(.96)}
+.chip.on{background:var(--berry);border-color:var(--berry);color:#fff;box-shadow:0 6px 14px -6px rgba(198,75,119,.6)}
+.chip.on.sage{background:var(--sage);border-color:var(--sage);box-shadow:0 6px 14px -6px rgba(95,162,133,.6)}
+/* steps */
+.stepbox{display:flex;align-items:center;gap:12px;margin-top:4px}
+.stepbox .num{flex:1;text-align:center}
+.stepbox .num b{font-family:'Unbounded';font-weight:700;font-size:30px;color:var(--berry-deep)}
+.stepbox .num small{display:block;font-size:11px;font-weight:700;color:var(--ink-soft)}
+.round{width:46px;height:46px;border-radius:50%;border:none;background:var(--surface-2);color:var(--berry);font-size:24px;font-weight:800;cursor:pointer;display:grid;place-items:center}
+.round:active{transform:scale(.92)}
+.stepbar{height:8px;background:var(--line);border-radius:99px;margin-top:12px;overflow:hidden}
+.stepbar i{display:block;height:100%;background:linear-gradient(90deg,var(--coral),var(--berry));border-radius:99px;transition:.4s}
+/* photo */
+.photobtn{margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:1.5px dashed var(--berry);border-radius:14px;background:var(--surface-2);color:var(--berry);font-weight:800;font-size:13px;cursor:pointer}
+.photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.photos img{width:64px;height:64px;object-fit:cover;border-radius:12px;box-shadow:var(--shadow-sm)}
+.savebtn{width:100%;margin-top:14px;padding:14px;border:none;border-radius:14px;background:var(--berry);color:#fff;font-family:'Manrope';font-weight:800;font-size:15px;cursor:pointer;box-shadow:var(--shadow);transition:.15s}
+.savebtn:active{transform:scale(.98)}
+.savebtn.sage{background:var(--sage)}
+/* ---------- feed ---------- */
+.tabs2{display:flex;gap:8px;margin:2px 0 14px;background:var(--surface-2);padding:5px;border-radius:99px}
+.tabs2 button{flex:1;border:none;background:none;padding:9px;border-radius:99px;font-family:'Manrope';font-weight:800;font-size:13px;color:var(--ink-soft);cursor:pointer}
+.tabs2 button.on{background:var(--surface);color:var(--berry-deep);box-shadow:var(--shadow-sm)}
+.feeditem{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.feeditem:last-child{border-bottom:none}
+.feeditem .av{flex:0 0 38px;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-family:'Unbounded';font-size:15px}
+.feeditem .ft{flex:1}
+.feeditem .ft p{margin:0;font-weight:600;font-size:14px;line-height:1.4}
+.feeditem .ft p b{font-weight:800}
+.feeditem .ft .tm{color:var(--ink-faint);font-size:11.5px;font-weight:700;margin-top:3px}
+.react{display:flex;gap:6px;margin-top:8px}
+.react button{border:1.5px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 9px;font-size:13px;cursor:pointer;transition:.15s}
+.react button:active{transform:scale(.9)}
+.react button.on{background:var(--blush);border-color:var(--berry)}
+.feedphoto{width:56px;height:56px;border-radius:12px;object-fit:cover;box-shadow:var(--shadow-sm)}
+/* weekly compare */
+.compare{margin-top:4px}
+.cmprow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.cmprow:last-child{border:none}
+.cmprow .av{flex:0 0 34px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-family:'Unbounded';font-size:14px}
+.dots{display:flex;gap:6px;flex:1}
+.dot{width:26px;height:26px;border-radius:9px;background:var(--line);display:grid;place-items:center;font-size:10px;font-weight:800;color:var(--ink-faint)}
+.dot.d{background:var(--sage);color:#fff}
+.dot.t{outline:2px solid var(--berry);outline-offset:1px}
+.cmrtot{font-weight:800;font-family:'Unbounded';font-size:15px;color:var(--berry-deep);flex:0 0 auto}
+/* ---------- measurements ---------- */
+.privnote{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:14px;padding:11px 13px;font-size:12.5px;font-weight:700;color:var(--berry-deep);margin-bottom:14px}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.spark{display:flex;align-items:flex-end;gap:7px;height:80px;padding:10px 4px 0;margin-top:6px}
+.spark .bar{flex:1;background:linear-gradient(180deg,var(--coral),var(--berry));border-radius:8px 8px 4px 4px;position:relative;min-height:8px}
+.spark .bar small{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:800;color:var(--berry-deep);white-space:nowrap}
+.spark .bar em{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:var(--ink-faint);font-style:normal}
+/* ---------- settings ---------- */
+.sysopt{display:flex;flex-direction:column;gap:10px}
+.sysrow{display:flex;align-items:center;gap:12px;padding:13px;border:1.5px solid var(--line);border-radius:16px;cursor:pointer;transition:.15s}
+.sysrow.on{border-color:var(--berry);background:var(--surface-2)}
+.sysrow .rad{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:0 0 20px;position:relative}
+.sysrow.on .rad{border-color:var(--berry)}
+.sysrow.on .rad::after{content:"";position:absolute;inset:3px;background:var(--berry);border-radius:50%}
+.sysrow .si{flex:1}
+.sysrow .si b{font-weight:800;font-size:14px}
+.sysrow .si small{display:block;color:var(--ink-soft);font-weight:600;font-size:12px}
+.sysrow .kc{font-family:'Unbounded';font-weight:600;font-size:13px;color:var(--coral)}
+.reftable{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+.reftable th,.reftable td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line)}
+.reftable th{font-weight:800;color:var(--ink-soft);font-size:11px}
+.reftable td:first-child,.reftable th:first-child{text-align:left;font-weight:800}
+.note{font-size:12.5px;color:var(--ink-soft);font-weight:600;line-height:1.5;margin-top:8px}
+.note b{color:var(--ink)}
+/* ---------- bottom nav ---------- */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:440px;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;padding:8px 6px calc(8px + env(safe-area-inset-bottom));z-index:50}
+.nav button{flex:1;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;cursor:pointer;color:var(--ink-faint);font-family:'Manrope';font-weight:700;font-size:10.5px}
+.nav button .ni{font-size:21px;line-height:1;filter:grayscale(1) opacity(.55);transition:.15s}
+.nav button.on{color:var(--berry-deep)}
+.nav button.on .ni{filter:none}
+/* toast */
+.toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%) translateY(30px);background:var(--ink);color:#fff;padding:13px 20px;border-radius:99px;font-weight:800;font-size:14px;box-shadow:0 12px 30px -8px rgba(0,0,0,.4);opacity:0;transition:.3s;z-index:100;pointer-events:none;display:flex;align-items:center;gap:9px;max-width:90%}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .em{font-size:20px}
+/* confetti */
+.confetti{position:fixed;pointer-events:none;font-size:20px;z-index:99;animation:fall 1.1s ease-in forwards}
+@keyframes fall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(140px) rotate(320deg)}}
+.empty{text-align:center;padding:30px 10px;color:var(--ink-faint);font-weight:700;font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- HEADER -->
+  <div class="top">
+    <div class="brandrow">
+      <div class="brand">Лайту<span>ем</span></div>
+      <div class="who" id="whoBox">
+        <span id="whoName">Инна</span>
+        <span class="av inna" id="whoAv">И</span>
+      </div>
+    </div>
+    <div class="greet">
+      <div class="hi" id="greetHi">Привет, Инна 🌸</div>
+      <div class="date" id="greetDate"></div>
+    </div>
+  </div>
+
+  <!-- ===== СЕГОДНЯ ===== -->
+  <div class="screen active" id="s-today">
+    <div class="hero">
+      <div class="ring">
+        <svg width="96" height="96" viewBox="0 0 96 96">
+          <circle cx="48" cy="48" r="40" fill="none" stroke="#F1DFE5" stroke-width="9"/>
+          <circle id="ringFill" cx="48" cy="48" r="40" fill="none" stroke="url(#g)" stroke-width="9" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="251"/>
+          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F19A7E"/><stop offset="1" stop-color="#C64B77"/></linearGradient></defs>
+        </svg>
+        <div class="pct"><div><b id="ringPct">0%</b><small id="ringSub">дня</small></div></div>
+      </div>
+      <div class="herotext">
+        <div class="t" id="heroT">Погнали 💪</div>
+        <div class="s" id="heroS">Отметь, что уже сделала сегодня</div>
+        <div class="streak">🔥 <span id="streakN">0</span> дней подряд</div>
+      </div>
+    </div>
+
+    <!-- Питание -->
+    <div class="card open" id="c-meals">
+      <div class="cardhead" onclick="toggleCard('c-meals')">
+        <div class="ic">🍽️</div>
+        <div class="tt"><b>Питание</b><small id="mealSub">Система «Лайт» · 1500 ккал</small></div>
+        <span class="done-badge" id="mealDone" style="display:none">✓</span>
+        <span class="chev">›</span>
+      </div>
+      <div class="body"><div class="bodyin" id="mealsBody"></div></div>
+    </div>
+
+    <!-- Уход -->
+    <div class="card" id="c-care">
+      <div class="cardhead" onclick="toggleCard('c-care')">
+        <div class="ic">🫧</div>
+        <div class="tt"><b>Уход за телом</b><small id="careSub">Ничего не отмечено</small></div>
+        <span class="chev">›</span>
+      </div>
+      <div class="body"><div class="bodyin">
+        <div class="chips" id="careChips"></div>
+      </div></div>
+    </div>
+
+    <!-- Активность -->
+    <div class="card" id="c-act">
+      <div class="cardhead" onclick="toggleCard('c-act')">
+        <div class="ic">🤸‍♀️</div>
+        <div class="tt"><b>Активность</b><small id="actSub">Не отмечено</small></div>
+        <span class="chev">›</span>
+      </div>
+      <div class="body"><div class="bodyin">
+        <div class="chips" id="actChips"></div>
+      </div></div>
+    </div>
+
+    <!-- Шаги -->
+    <div class="card" id="c-steps">
+      <div class="cardhead" onclick="toggleCard('c-steps')">
+        <div class="ic">👟</div>
+        <div class="tt"><b>Шаги</b><small id="stepSub">Цель 8 000</small></div>
+        <span class="chev">›</span>
+      </div>
+      <div class="body"><div class="bodyin">
+        <div class="stepbox">
+          <button class="round" onclick="bumpSteps(-500)">–</button>
+          <div class="num"><b id="stepN">0</b><small>из 8 000</small></div>
+          <button class="round" onclick="bumpSteps(500)">+</button>
+        </div>
+        <div class="stepbar"><i id="stepFill"></i></div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- ===== ВМЕСТЕ ===== -->
+  <div class="screen" id="s-together">
+    <div class="tabs2">
+      <button class="on" onclick="feedTab('feed',this)">Лента</button>
+      <button onclick="feedTab('week',this)">Неделя</button>
+    </div>
+    <div id="feedView"><div class="card"><div id="feedList"></div></div></div>
+    <div id="weekView" style="display:none">
+      <div class="sh"><h2>Постоянство недели</h2><span class="mini">кто сколько дней заполнил</span></div>
+      <div class="card"><div class="compare" id="compare"></div></div>
+      <p class="note" style="text-align:center">Замеры и вес друг друга вы <b>не видите</b> — только галочки «сделала». Соревнуемся с ленью, а не друг с другом 💛</p>
+    </div>
+  </div>
+
+  <!-- ===== ЗАМЕРЫ ===== -->
+  <div class="screen" id="s-measure">
+    <div class="privnote">🔒 Замеры видны <b>только тебе</b>. Катя их не видит.</div>
+    <div class="sh"><h2>Динамика веса</h2><span class="mini" id="measWeeks"></span></div>
+    <div class="card"><div class="spark" id="spark"></div></div>
+    <div class="sh"><h2>Замер недели</h2><span class="mini">старт 3 августа</span></div>
+    <div class="card">
+      <div class="mgrid" id="measGrid"></div>
+      <button class="savebtn" style="margin-top:16px" onclick="saveMeasure()">Сохранить замер</button>
+    </div>
+  </div>
+
+  <!-- ===== Я / НАСТРОЙКИ ===== -->
+  <div class="screen" id="s-me">
+    <div class="sh"><h2>Моя система питания</h2></div>
+    <div class="card"><div class="sysopt" id="sysOpts"></div></div>
+
+    <div class="sh"><h2>Нормы по системе</h2><span class="mini" id="normSys"></span></div>
+    <div class="card" id="normCard"></div>
+
+    <div class="sh"><h2>Спецблюда (граммовки)</h2><span class="mini">из методики</span></div>
+    <div class="card" style="overflow-x:auto">
+      <table class="reftable" id="refTable"></table>
+      <p class="note" style="margin-top:12px">Если ешь не «второе», а это блюдо — бери граммовку из таблицы вместо своей нормы.</p>
+    </div>
+
+    <div class="sh"><h2>Полезно помнить</h2></div>
+    <div class="card">
+      <p class="note">🍵 <b>Чай/кофе</b> без сахара и молока — без подсчёта.</p>
+      <p class="note">🥛 <b>1 стакан</b> молока/кефира/сока 200 мл в день — без подсчёта.</p>
+      <p class="note">🍲 <b>Суп вместо второго:</b> лёгкий — 500 г + 100 г основы; сытный — 250 г + 100 г; суп-пюре — по виду (сырный до 250 г, грибной до 500 г) + 100 г.</p>
+      <p class="note">🍰 <b>Сладкое включать в основу:</b> Ультралайт 60 г · Лайт 80 г · Лайт Плюс 80 г.</p>
+    </div>
+    <p class="empty">Лайтуем · прототип v0.1 · методика София Христозова</p>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav">
+    <button class="on" data-s="today" onclick="go('today',this)"><span class="ni">🌸</span>Сегодня</button>
+    <button data-s="together" onclick="go('together',this)"><span class="ni">👯‍♀️</span>Вместе</button>
+    <button data-s="measure" onclick="go('measure',this)"><span class="ni">📏</span>Замеры</button>
+    <button data-s="me" onclick="go('me',this)"><span class="ni">🌿</span>Я</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="em">✨</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============================================================
+   ЛАЙТУЕМ · подключено к Supabase.
+   Открывается как Telegram Mini App. Данные общие с Катей,
+   замеры — личные (Катя не видит цифры в интерфейсе).
+   ============================================================ */
+
+// ---- КОНФИГ (это твои значения из Supabase) ----
+const SB_URL = 'https://mikubhndfhhtoswletmj.supabase.co';
+const SB_KEY = 'sb_publishable_wch05xP3x7rF8_RjCP52Zg_H8tIQXxx';
+
+// ---- Методика Христозовой: нормы по системам ----
+const SYSTEMS = {
+  ultra: {name:'Ультралайт', kcal:1300, sweet:60, meals:{
+    breakfast:{kcal:360, base:200, veg:0, hint:'до 200 г (каши/супы/яйца) или до 100 г калорийный'},
+    lunch:{kcal:460, base:210, veg:150},
+    dinner:{kcal:460, base:210, veg:150},
+  }},
+  light: {name:'Лайт', kcal:1500, sweet:80, meals:{
+    breakfast:{kcal:440, base:210, veg:150},
+    lunch:{kcal:520, base:230, veg:150},
+    dinner:{kcal:520, base:230, veg:150},
+  }},
+  plus: {name:'Лайт Плюс', kcal:1700, sweet:80, meals:{
+    breakfast:{kcal:440, base:210, veg:150},
+    lunch:{kcal:670, base:310, veg:150},
+    dinner:{kcal:590, base:280, veg:150},
+  }},
+};
+const CARE = ['Ручной массаж','Сухая щётка','Массаж прибором','Масло для тела','Скраб','Контрастный душ'];
+const ACT  = ['Тренировка дома','Зал','Прыжки','Танцы','Ходьба','Растяжка','Плавание'];
+const MEAL_LABEL = {breakfast:'Завтрак', lunch:'Обед', dinner:'Ужин'};
+const MEAS_FIELDS = [['weight','Вес, кг'],['waist','Талия, см'],['hips','Бёдра, см'],['chest','Грудь, см'],['thigh','Бедро, см'],['arm','Рука, см']];
+const REF = {
+  cols:['Ультра','Лайт','Медиум','Плюс','Про'],
+  rows:[['Выпечка',150,170,170,210,210],['Роллы',170,190,210,260,260],['Торт',100,120,130,150,150],
+    ['Вареники с карт.',190,220,220,260,300],['Пельмени индейка',150,180,190,200,240],
+    ['Пельмени свин/гов',150,150,150,165,200],['Пельмени курица',200,230,230,270,315],
+    ['Шаурма курица',210,280,280,315,360],['Хинкали свин/гов',150,180,190,200,240]],
+};
+
+// ---- состояние ----
+let sb = null;
+let ME = null;             // {id,name,avatar,color,system}
+let DEMO = false;          // true, если открыто вне Telegram / нет связи
+let TODAY = null;          // сегодняшний лог ME
+let FEED = [];             // общая лента
+let PROFILES = {};         // id -> profile (для ленты/сравнения)
+let MEASURES = [];         // мои замеры
+let WEEK = {};             // uid -> [0..1]*7 закрытых дней
+
+function todayKey(){return new Date().toISOString().slice(0,10);}
+function blankLog(){return {meals:{breakfast:{},lunch:{},dinner:{}}, care:[], activity:[], steps:0};}
+
+// ============================================================
+//  СТАРТ
+// ============================================================
+async function boot(){
+  if(window.Telegram&&Telegram.WebApp){try{Telegram.WebApp.ready();Telegram.WebApp.expand();}catch(e){}}
+  renderDate();
+  const u = tgUser();
+  try{
+    sb = window.supabase.createClient(SB_URL, SB_KEY);
+    if(!u){ return startDemo('Демо-режим · открой бота в Telegram, чтобы синхронизироваться с Катей'); }
+    ME = await ensureProfile(u);
+    await Promise.all([loadToday(), loadFeed(), loadMeasures(), loadWeek()]);
+    renderAll();
+    startPolling();
+  }catch(e){
+    console.error('Supabase error:', e);
+    startDemo('Нет связи с базой — показываю демо. Проверь, что SQL-схема запущена.');
+  }
+}
+
+function tgUser(){
+  try{ const u=Telegram.WebApp.initDataUnsafe.user; if(u&&u.id) return {id:u.id, name:u.first_name||'Я'}; }catch(e){}
+  return null;
+}
+
+async function ensureProfile(u){
+  let {data} = await sb.from('profiles').select('*').eq('id',u.id).maybeSingle();
+  if(!data){
+    const {count} = await sb.from('profiles').select('*',{count:'exact',head:true});
+    const color = (count||0)===0 ? 'inna' : 'katya';
+    const ins = await sb.from('profiles')
+      .insert({id:u.id, name:u.name, avatar:(u.name||'?').slice(0,1).toUpperCase(), color, system:'light'})
+      .select().single();
+    data = ins.data;
+  }
+  PROFILES[data.id]=data;
+  return data;
+}
+
+// ============================================================
+//  ЗАГРУЗКА
+// ============================================================
+async function loadToday(){
+  const {data} = await sb.from('daily_logs').select('*').eq('user_id',ME.id).eq('log_date',todayKey()).maybeSingle();
+  TODAY = data ? {meals:data.meals||{breakfast:{},lunch:{},dinner:{}}, care:data.care||[], activity:data.activity||[], steps:data.steps||0}
+              : blankLog();
+}
+async function saveToday(){
+  await sb.from('daily_logs').upsert({
+    user_id:ME.id, log_date:todayKey(),
+    meals:TODAY.meals, care:TODAY.care, activity:TODAY.activity, steps:TODAY.steps, updated_at:new Date().toISOString()
+  }, {onConflict:'user_id,log_date'});
+  loadWeek();
+}
+async function loadFeed(){
+  const {data} = await sb.from('feed').select('*, profiles(name,avatar,color)').order('created_at',{ascending:false}).limit(50);
+  FEED = data||[];
+}
+async function pushFeed(text, photo_url){
+  const {data} = await sb.from('feed').insert({user_id:ME.id, text, photo_url:photo_url||null}).select('*, profiles(name,avatar,color)').single();
+  if(data) FEED.unshift(data);
+  renderFeed();
+}
+async function reactFeed(id,e){
+  const item = FEED.find(f=>f.id===id); if(!item)return;
+  const r = item.reactions || (item.reactions={}); r[e]=(r[e]||0)+1;
+  await sb.from('feed').update({reactions:r}).eq('id',id);
+  renderFeed(); toast(e,'Отправила поддержку!');
+}
+async function loadMeasures(){
+  const {data} = await sb.from('measures').select('*').eq('user_id',ME.id).order('created_at',{ascending:true});
+  MEASURES = data||[];
+}
+async function loadWeek(){
+  // понедельник текущей недели
+  const now=new Date(); const day=(now.getDay()+6)%7;
+  const mon=new Date(now); mon.setDate(now.getDate()-day); const monKey=mon.toISOString().slice(0,10);
+  const {data} = await sb.from('daily_logs').select('user_id,log_date,meals,care,activity,steps').gte('log_date',monKey);
+  // подтянем профили, которых ещё нет
+  const {data:profs} = await sb.from('profiles').select('*');
+  (profs||[]).forEach(p=>PROFILES[p.id]=p);
+  WEEK={};
+  Object.keys(PROFILES).forEach(id=>WEEK[id]=[0,0,0,0,0,0,0]);
+  (data||[]).forEach(r=>{
+    const d=(new Date(r.log_date).getDay()+6)%7;
+    const any = (r.meals&&['breakfast','lunch','dinner'].some(m=>r.meals[m]&&r.meals[m].base)) || (r.care&&r.care.length) || (r.activity&&r.activity.length) || (r.steps>=8000);
+    if(!WEEK[r.user_id]) WEEK[r.user_id]=[0,0,0,0,0,0,0];
+    if(any) WEEK[r.user_id][d]=1;
+  });
+  if(document.getElementById('compare')) renderCompare();
+}
+
+function startPolling(){ setInterval(async()=>{ if(DEMO)return; await loadFeed(); await loadWeek(); renderFeed(); renderCompare(); }, 15000); }
+
+// ============================================================
+//  РЕНДЕР
+// ============================================================
+function renderAll(){ refreshHeader(); renderMeals(); renderCare(); renderAct(); renderSteps(); renderFeed(); renderCompare(); renderMeasure(); renderSettings(); refreshHero(); }
+
+function renderDate(){
+  const d=new Date();
+  const days=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+  const mon=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  greetDate.textContent = `${days[d.getDay()]}, ${d.getDate()} ${mon[d.getMonth()]}`;
+}
+function refreshHeader(){
+  whoName.textContent=ME.name; whoAv.textContent=ME.avatar||(ME.name||'?')[0]; whoAv.className='av '+(ME.color||'inna');
+  greetHi.textContent=`Привет, ${ME.name} 🌸`;
+  streakN.textContent=streakCount();
+}
+function streakCount(){
+  // серия закрытых дней у меня подряд, считая с сегодня назад по WEEK
+  const arr=WEEK[ME.id]||[]; const todayIdx=(new Date().getDay()+6)%7;
+  let s=0; for(let i=todayIdx;i>=0;i--){ if(arr[i])s++; else break; } return s;
+}
+
+function go(s,btn){
+  document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+  document.getElementById('s-'+s).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); window.scrollTo(0,0);
+}
+function toggleCard(id){document.getElementById(id).classList.toggle('open');}
+
+// ---- meals ----
+function renderMeals(){
+  const sys=SYSTEMS[ME.system]||SYSTEMS.light;
+  mealSub.textContent=`Система «${sys.name}» · ${sys.kcal} ккал`;
+  let h='';
+  for(const m of ['breakfast','lunch','dinner']){
+    const cfg=sys.meals[m], v=TODAY.meals[m]||(TODAY.meals[m]={});
+    h+=`<div class="meal">
+      <div class="mealtop"><b>${MEAL_LABEL[m]}</b><span class="kcal">${cfg.kcal} ккал</span></div>
+      <div class="inrow">
+        <div class="field">
+          <label>Основа <span class="tgt">· норма ${cfg.base} г</span></label>
+          <div class="gramin ${(v.base>cfg.base)?'over':''}"><input type="number" inputmode="numeric" placeholder="0" value="${v.base||''}" oninput="setMeal('${m}','base',this)"><span>г</span></div>
+          <div class="overhint">чуть выше нормы — ок, если суп/замена</div>
+        </div>`;
+    if(cfg.veg>0){
+      h+=`<div class="field">
+          <label>Овощи <span class="tgt">· до ${cfg.veg} г</span></label>
+          <div class="gramin ${(v.veg>cfg.veg)?'over':''}"><input type="number" inputmode="numeric" placeholder="0" value="${v.veg||''}" oninput="setMeal('${m}','veg',this)"><span>г</span></div>
+          <div class="overhint">выше ${cfg.veg} г</div>
+        </div>`;
+    }
+    h+=`</div>`;
+    if(m==='breakfast'&&cfg.hint) h+=`<div class="note" style="margin-top:8px">💡 ${cfg.hint}</div>`;
+    h+=`</div>`;
+  }
+  h+=`<button class="photobtn" onclick="document.getElementById('foodPhoto').click()">📸 Добавить фото еды</button>
+      <input type="file" id="foodPhoto" accept="image/*" style="display:none" onchange="addPhoto(this)">
+      <div class="photos" id="foodPhotos"></div>
+      <button class="savebtn" onclick="saveMeals()">Сохранить питание</button>`;
+  mealsBody.innerHTML=h;
+}
+function setMeal(m,f,el){TODAY.meals[m][f]=parseInt(el.value)||0; el.closest('.gramin').classList.toggle('over', TODAY.meals[m][f]>(SYSTEMS[ME.system]||SYSTEMS.light).meals[m][f]); }
+async function saveMeals(){
+  const filled=['breakfast','lunch','dinner'].filter(m=>TODAY.meals[m].base);
+  mealDone.style.display = filled.length? 'flex':'none';
+  await saveToday(); refreshHero();
+  if(filled.length){ await pushFeed(`заполнила питание (${filled.length}/3 приёма)`); celebrate('🍽️','Питание записано, умница!'); }
+  else toast('📝','Введи хотя бы завтрак');
+}
+async function addPhoto(el){
+  const f=el.files[0]; if(!f)return;
+  toast('⏳','Загружаю фото…');
+  try{
+    const path=`${ME.id}/${Date.now()}_${Math.random().toString(36).slice(2,7)}.jpg`;
+    const up=await sb.storage.from('food').upload(path,f,{contentType:f.type||'image/jpeg'});
+    if(up.error) throw up.error;
+    const {data}=sb.storage.from('food').getPublicUrl(path);
+    const url=data.publicUrl;
+    (TODAY.photos=TODAY.photos||[]).push(url); renderPhotos();
+    await pushFeed('поделилась фото еды 🍓', url);
+    toast('📸','Фото добавлено — Катя увидит в ленте');
+  }catch(e){ console.error(e); toast('⚠️','Не вышло загрузить фото'); }
+}
+function renderPhotos(){const box=document.getElementById('foodPhotos'); if(!box)return; box.innerHTML=(TODAY.photos||[]).map(u=>`<img src="${u}">`).join('');}
+
+// ---- care & activity ----
+function renderCare(){
+  careChips.innerHTML=CARE.map(c=>`<div class="chip sage ${TODAY.care.includes(c)?'on':''}" onclick="toggleChip('care','${c}',this)">${TODAY.care.includes(c)?'✓ ':''}${c}</div>`).join('');
+  updCareSub();
+}
+function renderAct(){
+  actChips.innerHTML=ACT.map(c=>`<div class="chip ${TODAY.activity.includes(c)?'on':''}" onclick="toggleChip('activity','${c}',this)">${TODAY.activity.includes(c)?'✓ ':''}${c}</div>`).join('');
+  updActSub();
+}
+async function toggleChip(type,val){
+  const arr=TODAY[type]; const i=arr.indexOf(val);
+  let added=false;
+  if(i>=0){arr.splice(i,1);} else {arr.push(val); added=true;}
+  type==='care'?renderCare():renderAct(); await saveToday(); refreshHero();
+  if(added){ await pushFeed(`отметила <b>${val.toLowerCase()}</b>`); celebrate(type==='care'?'🫧':'🔥', type==='care'?'Забота — это тоже прогресс 💛':'Красотка, двигаемся!'); }
+}
+function updCareSub(){careSub.textContent=TODAY.care.length? TODAY.care.length+' · '+TODAY.care.join(', '):'Ничего не отмечено';}
+function updActSub(){actSub.textContent=TODAY.activity.length? TODAY.activity.join(', '):'Не отмечено';}
+
+// ---- steps ----
+let stepSaveT;
+function renderSteps(){const s=TODAY.steps||0; stepN.textContent=s.toLocaleString('ru'); stepFill.style.width=Math.min(100,s/8000*100)+'%'; stepSub.textContent=`Цель 8 000 · ${s.toLocaleString('ru')}`;}
+function bumpSteps(n){
+  TODAY.steps=Math.max(0,(TODAY.steps||0)+n); renderSteps(); refreshHero();
+  clearTimeout(stepSaveT); stepSaveT=setTimeout(saveToday,600);
+  if(TODAY.steps>=8000 && TODAY.steps-n<8000){celebrate('👟','8 000 шагов взято!'); pushFeed('прошла 8 000 шагов 👟');}
+}
+
+// ---- hero / ring ----
+function refreshHero(){
+  const d=TODAY;
+  let done=0,total=4;
+  if(['breakfast','lunch','dinner'].some(m=>d.meals[m]&&d.meals[m].base))done++;
+  if(d.care.length)done++;
+  if(d.activity.length)done++;
+  if((d.steps||0)>=8000)done++;
+  const pct=Math.round(done/total*100);
+  ringPct.textContent=pct+'%';
+  ringFill.style.strokeDashoffset = 251-(251*pct/100);
+  updCareSub(); updActSub();
+  mealDone.style.display=['breakfast','lunch','dinner'].some(m=>d.meals[m]&&d.meals[m].base)?'flex':'none';
+  if(pct===0){heroT.textContent='Погнали 💪';heroS.textContent='Отметь, что уже сделала сегодня';}
+  else if(pct<100){heroT.textContent='Идёшь отлично!';heroS.textContent=`Закрыто ${done} из ${total}. Ещё чуть-чуть 🌷`;}
+  else{heroT.textContent='День закрыт! 🎉';heroS.textContent='Ты сегодня умница. Так держать!';}
+}
+
+// ---- feed ----
+function feedTab(t,btn){document.querySelectorAll('.tabs2 button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  feedView.style.display=t==='feed'?'block':'none'; weekView.style.display=t==='week'?'block':'none';}
+function timeShort(iso){try{return new Date(iso).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});}catch(e){return '';}}
+function isToday(iso){try{return new Date(iso).toISOString().slice(0,10)===todayKey();}catch(e){return true;}}
+function renderFeed(){
+  if(!FEED.length){feedList.innerHTML='<div class="empty">Пока пусто — сделай первый шаг, и он появится тут 🌸</div>';return;}
+  feedList.innerHTML=FEED.map(f=>{const p=f.profiles||PROFILES[f.user_id]||{name:'?',avatar:'?',color:'inna'};
+    return `<div class="feeditem">
+      <div class="av ${p.color}">${p.avatar||(p.name||'?')[0]}</div>
+      <div class="ft">
+        <p><b>${p.name}</b> ${f.text}</p>
+        <div class="tm">${isToday(f.created_at)?'сегодня':new Date(f.created_at).toLocaleDateString('ru')} · ${timeShort(f.created_at)}</div>
+        ${f.photo_url?`<img class="feedphoto" style="margin-top:8px" src="${f.photo_url}">`:''}
+        <div class="react">
+          ${['❤️','🔥','👏','💪'].map(e=>`<button class="${f.reactions&&f.reactions[e]?'on':''}" onclick="reactFeed('${f.id}','${e}')">${e}${f.reactions&&f.reactions[e]?' '+f.reactions[e]:''}</button>`).join('')}
+        </div>
+      </div></div>`;}).join('');
+}
+
+// ---- weekly compare ----
+function renderCompare(){
+  const el=document.getElementById('compare'); if(!el)return;
+  const days=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  const todayIdx=(new Date().getDay()+6)%7;
+  const ids=Object.keys(PROFILES);
+  if(!ids.length){el.innerHTML='<div class="empty">Как только вы обе начнёте отмечать — тут появится сравнение 🌸</div>';return;}
+  let h='';
+  for(const id of ids){const p=PROFILES[id]; const arr=WEEK[id]||[0,0,0,0,0,0,0]; const tot=arr.filter(Boolean).length;
+    h+=`<div class="cmprow"><div class="av ${p.color}">${p.avatar||(p.name||'?')[0]}</div>
+      <div class="dots">${arr.map((v,j)=>`<div class="dot ${v?'d':''} ${j===todayIdx?'t':''}">${days[j]}</div>`).join('')}</div>
+      <div class="cmrtot">${tot}/7</div></div>`;
+  }
+  el.innerHTML=h;
+}
+
+// ---- measures (личные) ----
+function renderMeasure(){
+  const ms=MEASURES;
+  measWeeks.textContent=ms.length? ms.length+' замеров':'ещё нет';
+  if(ms.length){
+    const ws=ms.map(m=>Number(m.weight)).filter(x=>x); const mn=Math.min(...ws)-1, mx=Math.max(...ws)+0.5;
+    spark.innerHTML=ms.map(m=>{const w=Number(m.weight)||mn; const h=8+(w-mn)/((mx-mn)||1)*60;
+      const lbl=new Date(m.created_at); const t=`${lbl.getDate()}.${String(lbl.getMonth()+1).padStart(2,'0')}`;
+      return `<div class="bar" style="height:${h}px"><small>${m.weight}</small><em>${t}</em></div>`;}).join('');
+  } else spark.innerHTML='<div class="empty" style="width:100%">Первый замер — 3 августа 🌱</div>';
+  measGrid.innerHTML=MEAS_FIELDS.map(([k,l])=>`<div class="field"><label>${l}</label><div class="gramin"><input type="number" inputmode="decimal" id="m_${k}" placeholder="0"><span>${k==='weight'?'кг':'см'}</span></div></div>`).join('');
+}
+async function saveMeasure(){
+  const w=parseFloat(document.getElementById('m_weight').value);
+  if(!w){toast('⚖️','Введи хотя бы вес');return;}
+  const now=new Date(); const day=(now.getDay()+6)%7; const mon=new Date(now); mon.setDate(now.getDate()-day);
+  const row={user_id:ME.id, week_start:mon.toISOString().slice(0,10), weight:w};
+  ['waist','hips','chest','thigh','arm'].forEach(k=>{const v=parseFloat(document.getElementById('m_'+k).value); if(v)row[k]=v;});
+  const {data,error}=await sb.from('measures').insert(row).select().single();
+  if(error){console.error(error);toast('⚠️','Не сохранилось');return;}
+  MEASURES.push(data); renderMeasure();
+  celebrate('📏','Замер сохранён — виден только тебе 🔒');
+  await pushFeed('внесла замер недели ✅'); // виден факт, цифры — нет
+}
+
+// ---- settings ----
+function renderSettings(){
+  sysOpts.innerHTML=Object.entries(SYSTEMS).map(([k,s])=>`
+    <div class="sysrow ${ME.system===k?'on':''}" onclick="pickSystem('${k}')">
+      <div class="rad"></div>
+      <div class="si"><b>${s.name}</b><small>завтрак ${s.meals.breakfast.kcal} · обед ${s.meals.lunch.kcal} · ужин ${s.meals.dinner.kcal} ккал</small></div>
+      <div class="kc">${s.kcal}</div>
+    </div>`).join('');
+  const s=SYSTEMS[ME.system]||SYSTEMS.light;
+  normSys.textContent=s.name;
+  normCard.innerHTML=['breakfast','lunch','dinner'].map(m=>{const c=s.meals[m];
+    return `<div class="meal"><div class="mealtop"><b>${MEAL_LABEL[m]}</b><span class="kcal">${c.kcal} ккал</span></div>
+      <div class="note">Основа <b>${c.base} г</b>${c.veg?` · овощи до <b>${c.veg} г</b>`:''}</div></div>`;}).join('');
+  refTable.innerHTML=`<tr><th>Блюдо</th>${REF.cols.map(c=>`<th>${c}</th>`).join('')}</tr>`+
+    REF.rows.map(r=>`<tr><td>${r[0]}</td>${r.slice(1).map(x=>`<td>${x} г</td>`).join('')}</tr>`).join('');
+}
+async function pickSystem(k){
+  ME.system=k; renderSettings(); renderMeals(); refreshHero();
+  if(!DEMO) await sb.from('profiles').update({system:k}).eq('id',ME.id);
+  toast('🌿','Система: '+SYSTEMS[k].name);
+}
+
+// ---- feedback ----
+let toastT;
+const toast_=document.getElementById('toast');
+function toast(em,msg){toastMsg.textContent=msg; document.querySelector('#toast .em').textContent=em; toast_.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>toast_.classList.remove('show'),2200);}
+function celebrate(em,msg){toast(em,msg); confettiBurst();
+  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.HapticFeedback){try{Telegram.WebApp.HapticFeedback.notificationOccurred('success');}catch(e){}}}
+function confettiBurst(){const ems=['🌸','✨','💗','🌷','⭐','💛'];
+  for(let i=0;i<10;i++){const c=document.createElement('div');c.className='confetti';c.textContent=ems[i%ems.length];
+    c.style.left=(20+Math.random()*60)+'%';c.style.top='40%';c.style.animationDelay=(Math.random()*.2)+'s';
+    document.body.appendChild(c);setTimeout(()=>c.remove(),1300);}}
+
+// ============================================================
+//  ДЕМО-РЕЖИМ (вне Telegram / нет связи) — чтобы файл не был пустым
+// ============================================================
+function startDemo(msg){
+  DEMO=true;
+  ME={id:1, name:'Инна', avatar:'И', color:'inna', system:'light'};
+  PROFILES={1:ME, 2:{id:2,name:'Катя',avatar:'К',color:'katya'}};
+  TODAY=blankLog();
+  MEASURES=[{weight:74.2,created_at:'2026-06-22'},{weight:73.1,created_at:'2026-06-29'},{weight:72.4,created_at:'2026-07-06'},{weight:71.9,created_at:'2026-07-13'},{weight:71.0,created_at:'2026-07-20'}];
+  FEED=[
+    {id:'d1',user_id:2,text:'ввела <b>завтрак</b> — основа 180 г',created_at:new Date().toISOString(),reactions:{},profiles:PROFILES[2]},
+    {id:'d2',user_id:2,text:'сделала <b>тренировку дома</b> 💪',created_at:new Date(Date.now()-1800000).toISOString(),reactions:{'🔥':1},profiles:PROFILES[2]},
+    {id:'d3',user_id:2,text:'отметила <b>ручной массаж</b>',created_at:new Date(Date.now()-3600000).toISOString(),reactions:{},profiles:PROFILES[2]},
+  ];
+  WEEK={1:[1,1,1,0,0,0,0], 2:[1,1,1,1,0,0,0]};
+  // переопределяем сетевые функции на локальные заглушки
+  saveToday=async()=>{}; loadWeek=async()=>{}; loadFeed=async()=>{};
+  pushFeed=async(t,ph)=>{FEED.unshift({id:'x'+Date.now(),user_id:1,text:t,created_at:new Date().toISOString(),reactions:{},photo_url:ph,profiles:ME}); renderFeed();};
+  reactFeed=(id,e)=>{const f=FEED.find(x=>x.id===id);if(f){f.reactions=f.reactions||{};f.reactions[e]=(f.reactions[e]||0)+1;renderFeed();toast(e,'Поддержка!');}};
+  addPhoto=(el)=>{const f=el.files[0];if(!f)return;const u=URL.createObjectURL(f);(TODAY.photos=TODAY.photos||[]).push(u);renderPhotos();pushFeed('поделилась фото еды 🍓',u);toast('📸','Фото добавлено');};
+  saveMeasure=async()=>{const w=parseFloat(document.getElementById('m_weight').value);if(!w){toast('⚖️','Введи вес');return;}MEASURES.push({weight:w,created_at:new Date().toISOString()});renderMeasure();celebrate('📏','Замер сохранён (демо)');};
+  pickSystem=(k)=>{ME.system=k;renderSettings();renderMeals();refreshHero();toast('🌿','Система: '+SYSTEMS[k].name);};
+  renderAll();
+  showBanner(msg);
+}
+function showBanner(msg){
+  let b=document.getElementById('demoBanner');
+  if(!b){b=document.createElement('div');b.id='demoBanner';
+    b.style.cssText='margin:0 16px 4px;background:#FBEEDA;color:#9A6A15;font-weight:700;font-size:12px;padding:9px 12px;border-radius:12px;text-align:center';
+    document.querySelector('.top').after(b);}
+  b.textContent='ℹ️ '+msg;
+}
+
+boot();
+</script>
+</body>
+</html>
