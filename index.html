@@ -181,6 +181,52 @@ body{
 .confetti{position:fixed;pointer-events:none;font-size:20px;z-index:99;animation:fall 1.1s ease-in forwards}
 @keyframes fall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(140px) rotate(320deg)}}
 .empty{text-align:center;padding:30px 10px;color:var(--ink-faint);font-weight:700;font-size:13px}
+/* ---------- water ---------- */
+.waterwrap{display:flex;gap:16px;align-items:center}
+.glass{position:relative;width:80px;height:110px;flex:0 0 80px;border:3px solid var(--berry);border-top:none;border-radius:5px 5px 22px 22px;overflow:hidden;background:var(--surface-2)}
+.glassfill{position:absolute;left:0;right:0;bottom:0;height:0%;background:linear-gradient(180deg,#8FD3F4,#4E9FDB);transition:height .55s cubic-bezier(.34,1.3,.5,1)}
+.glassfill::after{content:"";position:absolute;top:-5px;left:-10%;width:120%;height:9px;background:#BBE6FA;border-radius:50%;opacity:.85}
+.glassml{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Unbounded';font-weight:700;font-size:17px;color:var(--berry-deep);z-index:2;text-shadow:0 1px 2px rgba(255,255,255,.6)}
+.glassml small{font-family:'Manrope';font-size:10px;font-weight:700;color:var(--ink-soft)}
+.wateraside{flex:1;min-width:0}
+.watbtns{display:flex;gap:7px}
+.watbtn{flex:1;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 0;font-family:'Manrope';font-weight:800;font-size:14px;color:var(--berry);cursor:pointer;transition:.15s}
+.watbtn:active{transform:scale(.93);background:var(--surface-2)}
+.watcustom{display:flex;gap:7px;margin-top:8px}
+.watcustom input{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;font-family:'Manrope';font-weight:800;font-size:14px;color:var(--ink);outline:none}
+.watcustom input:focus{border-color:var(--berry);background:#fff}
+.watadd{flex:0 0 46px;border:none;background:var(--berry);color:#fff;border-radius:12px;font-size:20px;font-weight:800;cursor:pointer;transition:.15s}
+.watadd:active{transform:scale(.93)}
+.watundo{margin-top:10px;background:none;border:none;color:var(--ink-faint);font-weight:700;font-size:12px;cursor:pointer;padding:2px}
+/* ---------- refusals ---------- */
+.addref{display:flex;gap:8px;margin-bottom:4px}
+.addref input{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--bg);border-radius:12px;padding:11px 13px;font-family:'Manrope';font-weight:700;font-size:14px;color:var(--ink);outline:none}
+.addref input:focus{border-color:var(--berry);background:#fff}
+.addref button{flex:0 0 auto;border:none;background:var(--berry);color:#fff;border-radius:12px;padding:0 16px;font-family:'Manrope';font-weight:800;font-size:13px;cursor:pointer}
+.addref button:active{transform:scale(.96)}
+.refrow{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid var(--line)}
+.refrow:first-child{border-top:none}
+.refico{flex:0 0 40px;width:40px;height:40px;border-radius:12px;background:var(--sage-soft);display:grid;place-items:center;font-size:19px}
+.refbody{flex:1;min-width:0}
+.refbody b{font-weight:800;font-size:14px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.refbody small{color:var(--ink-soft);font-weight:700;font-size:12px}
+.refstreak{flex:0 0 auto;text-align:center;background:var(--gold-soft);color:#B4791F;border-radius:12px;padding:6px 11px;font-family:'Unbounded';font-weight:700;font-size:16px;line-height:1}
+.refstreak small{display:block;font-family:'Manrope';font-size:9px;font-weight:700;margin-top:2px}
+.refstop{flex:0 0 auto;background:none;border:none;color:var(--ink-faint);font-size:16px;cursor:pointer;padding:4px 2px;line-height:1}
+.refjoin{flex:0 0 auto;border:1.5px solid var(--sage);background:var(--sage-soft);color:var(--sage);border-radius:99px;padding:8px 13px;font-weight:800;font-size:12px;cursor:pointer}
+.refjoin:active{transform:scale(.95)}
+.refitem{padding:14px 0;border-top:1px solid var(--line)}
+.refitem:first-child{border-top:none}
+.refline{display:flex;align-items:center;gap:9px}
+.refem{flex:0 0 auto;font-size:18px}
+.reftitle{flex:1;min-width:0;font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reftot{flex:0 0 auto;background:var(--gold-soft);color:#B4791F;border-radius:99px;padding:5px 10px;font-weight:800;font-size:12px}
+.refitem .dots{margin-top:10px}
+/* ---------- lightbox ---------- */
+.lightbox{position:fixed;inset:0;background:rgba(20,8,14,.93);z-index:200;display:none;align-items:center;justify-content:center;padding:22px;cursor:zoom-out;animation:fade .2s ease}
+.lightbox.show{display:flex}
+.lightbox img{max-width:100%;max-height:100%;border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.6)}
+.photos img,.feedphoto{cursor:zoom-in}
 </style>
 </head>
 <body>
@@ -269,6 +315,33 @@ body{
         <div class="stepbar"><i id="stepFill"></i></div>
       </div></div>
     </div>
+
+    <!-- Вода -->
+    <div class="card open" id="c-water">
+      <div class="cardhead" onclick="toggleCard('c-water')">
+        <div class="ic">💧</div>
+        <div class="tt"><b>Вода</b><small id="waterSub">0 мл из 2000</small></div>
+        <span class="done-badge" id="waterDone" style="display:none">✓</span>
+        <span class="chev">›</span>
+      </div>
+      <div class="body"><div class="bodyin">
+        <div class="waterwrap">
+          <div class="glass"><div class="glassfill" id="glassFill"></div><div class="glassml" id="glassMl">0<small>мл</small></div></div>
+          <div class="wateraside">
+            <div class="watbtns">
+              <button class="watbtn" onclick="addWater(150)">+150</button>
+              <button class="watbtn" onclick="addWater(250)">+250</button>
+              <button class="watbtn" onclick="addWater(500)">+500</button>
+            </div>
+            <div class="watcustom">
+              <input type="number" inputmode="numeric" id="waterCustom" placeholder="своё, мл">
+              <button class="watadd" onclick="addWaterCustom()">＋</button>
+            </div>
+            <button class="watundo" onclick="addWater(-250)">− убрать 250 мл</button>
+          </div>
+        </div>
+      </div></div>
+    </div>
   </div>
 
   <!-- ===== ВМЕСТЕ ===== -->
@@ -283,6 +356,21 @@ body{
       <div class="card"><div class="compare" id="compare"></div></div>
       <p class="note" style="text-align:center">Замеры и вес друг друга вы <b>не видите</b> — только галочки «сделала». Соревнуемся с ленью, а не друг с другом 💛</p>
     </div>
+  </div>
+
+  <!-- ===== ОТКАЗЫ ===== -->
+  <div class="screen" id="s-refus">
+    <div class="sh"><h2>Мой челлендж отказов</h2><span class="mini">держимся 💪</span></div>
+    <div class="card">
+      <div class="addref">
+        <input type="text" id="refInput" placeholder="от чего отказываешься? напр. сахар" maxlength="40">
+        <button onclick="addRefusal()">Добавить</button>
+      </div>
+      <div id="myRefus"></div>
+    </div>
+    <div class="sh"><h2>Челлендж подруги</h2><span class="mini">можно присоединиться</span></div>
+    <div class="card"><div id="otherRefus"></div></div>
+    <p class="note" style="text-align:center">Каждый вечер бот пришлёт, сколько дней ты уже держишься 🌿</p>
   </div>
 
   <!-- ===== ЗАМЕРЫ ===== -->
@@ -325,11 +413,13 @@ body{
   <div class="nav">
     <button class="on" data-s="today" onclick="go('today',this)"><span class="ni">🌸</span>Сегодня</button>
     <button data-s="together" onclick="go('together',this)"><span class="ni">👯‍♀️</span>Вместе</button>
+    <button data-s="refus" onclick="go('refus',this)"><span class="ni">🚫</span>Отказы</button>
     <button data-s="measure" onclick="go('measure',this)"><span class="ni">📏</span>Замеры</button>
     <button data-s="me" onclick="go('me',this)"><span class="ni">🌿</span>Я</button>
   </div>
 </div>
 
+<div class="lightbox" id="lightbox" onclick="closePhoto()"><img id="lightboxImg" src="" alt=""></div>
 <div class="toast" id="toast"><span class="em">✨</span><span id="toastMsg"></span></div>
 
 <script>
@@ -382,9 +472,11 @@ let FEED = [];             // общая лента
 let PROFILES = {};         // id -> profile (для ленты/сравнения)
 let MEASURES = [];         // мои замеры
 let WEEK = {};             // uid -> [0..1]*7 закрытых дней
+let REFUS = [];            // все активные отказы (мои + подруги)
+let waterGoal = 2000;      // персональная норма воды, мл (35 мл × вес из «Замеров»)
 
 function todayKey(){return new Date().toISOString().slice(0,10);}
-function blankLog(){return {meals:{breakfast:{},lunch:{},dinner:{}}, care:[], activity:[], steps:0};}
+function blankLog(){return {meals:{breakfast:{},lunch:{},dinner:{}}, care:[], activity:[], steps:0, water:0};}
 
 // ============================================================
 //  СТАРТ
@@ -397,7 +489,7 @@ async function boot(){
     sb = window.supabase.createClient(SB_URL, SB_KEY);
     if(!u){ return startDemo('Демо-режим · открой бота в Telegram, чтобы синхронизироваться с Катей'); }
     ME = await ensureProfile(u);
-    await Promise.all([loadToday(), loadFeed(), loadMeasures(), loadWeek()]);
+    await Promise.all([loadToday(), loadFeed(), loadMeasures(), loadWeek(), loadRefusals()]);
     renderAll();
     startPolling();
   }catch(e){
@@ -430,13 +522,13 @@ async function ensureProfile(u){
 // ============================================================
 async function loadToday(){
   const {data} = await sb.from('daily_logs').select('*').eq('user_id',ME.id).eq('log_date',todayKey()).maybeSingle();
-  TODAY = data ? {meals:data.meals||{breakfast:{},lunch:{},dinner:{}}, care:data.care||[], activity:data.activity||[], steps:data.steps||0}
+  TODAY = data ? {meals:data.meals||{breakfast:{},lunch:{},dinner:{}}, care:data.care||[], activity:data.activity||[], steps:data.steps||0, water:data.water||0}
               : blankLog();
 }
 async function saveToday(){
   await sb.from('daily_logs').upsert({
     user_id:ME.id, log_date:todayKey(),
-    meals:TODAY.meals, care:TODAY.care, activity:TODAY.activity, steps:TODAY.steps, updated_at:new Date().toISOString()
+    meals:TODAY.meals, care:TODAY.care, activity:TODAY.activity, steps:TODAY.steps, water:TODAY.water||0, updated_at:new Date().toISOString()
   }, {onConflict:'user_id,log_date'});
   loadWeek();
 }
@@ -478,12 +570,12 @@ async function loadWeek(){
   if(document.getElementById('compare')) renderCompare();
 }
 
-function startPolling(){ setInterval(async()=>{ if(DEMO)return; await loadFeed(); await loadWeek(); renderFeed(); renderCompare(); }, 15000); }
+function startPolling(){ setInterval(async()=>{ if(DEMO)return; await loadFeed(); await loadWeek(); await loadRefusals(); renderFeed(); renderCompare(); renderRefus(); }, 15000); }
 
 // ============================================================
 //  РЕНДЕР
 // ============================================================
-function renderAll(){ refreshHeader(); renderMeals(); renderCare(); renderAct(); renderSteps(); renderFeed(); renderCompare(); renderMeasure(); renderSettings(); refreshHero(); }
+function renderAll(){ refreshHeader(); renderMeals(); renderCare(); renderAct(); renderSteps(); renderWater(); renderFeed(); renderCompare(); renderMeasure(); renderRefus(); renderSettings(); refreshHero(); }
 
 function renderDate(){
   const d=new Date();
@@ -564,7 +656,7 @@ async function addPhoto(el){
     toast('📸','Фото добавлено — Катя увидит в ленте');
   }catch(e){ console.error(e); toast('⚠️','Не вышло загрузить фото'); }
 }
-function renderPhotos(){const box=document.getElementById('foodPhotos'); if(!box)return; box.innerHTML=(TODAY.photos||[]).map(u=>`<img src="${u}">`).join('');}
+function renderPhotos(){const box=document.getElementById('foodPhotos'); if(!box)return; box.innerHTML=(TODAY.photos||[]).map(u=>`<img src="${u}" onclick="openPhoto('${u}')">`).join('');}
 
 // ---- care & activity ----
 function renderCare(){
@@ -625,7 +717,7 @@ function renderFeed(){
       <div class="ft">
         <p><b>${p.name}</b> ${f.text}</p>
         <div class="tm">${isToday(f.created_at)?'сегодня':new Date(f.created_at).toLocaleDateString('ru')} · ${timeShort(f.created_at)}</div>
-        ${f.photo_url?`<img class="feedphoto" style="margin-top:8px" src="${f.photo_url}">`:''}
+        ${f.photo_url?`<img class="feedphoto" style="margin-top:8px" src="${f.photo_url}" onclick="openPhoto('${f.photo_url}')">`:''}
         <div class="react">
           ${['❤️','🔥','👏','💪'].map(e=>`<button class="${f.reactions&&f.reactions[e]?'on':''}" onclick="reactFeed('${f.id}','${e}')">${e}${f.reactions&&f.reactions[e]?' '+f.reactions[e]:''}</button>`).join('')}
         </div>
@@ -668,7 +760,7 @@ async function saveMeasure(){
   ['waist','hips','chest','thigh','arm'].forEach(k=>{const v=parseFloat(document.getElementById('m_'+k).value); if(v)row[k]=v;});
   const {data,error}=await sb.from('measures').insert(row).select().single();
   if(error){console.error(error);toast('⚠️','Не сохранилось');return;}
-  MEASURES.push(data); renderMeasure();
+  MEASURES.push(data); renderMeasure(); renderWater();
   celebrate('📏','Замер сохранён — виден только тебе 🔒');
   await pushFeed('внесла замер недели ✅'); // виден факт, цифры — нет
 }
@@ -707,6 +799,129 @@ function confettiBurst(){const ems=['🌸','✨','💗','🌷','⭐','💛'];
     document.body.appendChild(c);setTimeout(()=>c.remove(),1300);}}
 
 // ============================================================
+//  ВОДА
+// ============================================================
+function latestWeight(){
+  const withW=(MEASURES||[]).filter(m=>m.weight!=null && !isNaN(parseFloat(m.weight)));
+  if(!withW.length) return null;
+  withW.sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
+  return parseFloat(withW[withW.length-1].weight);
+}
+function computeWaterGoal(){
+  const w=latestWeight();
+  waterGoal = w ? Math.round(35*w) : 2000;
+}
+function renderWater(){
+  computeWaterGoal();
+  const w=TODAY.water||0;
+  const pct=Math.min(100,Math.round(w/waterGoal*100));
+  const gf=document.getElementById('glassFill'); if(gf) gf.style.height=pct+'%';
+  const gm=document.getElementById('glassMl'); if(gm) gm.innerHTML=w+'<small>мл</small>';
+  const ws=document.getElementById('waterSub'); if(ws) ws.textContent = latestWeight() ? (w+' мл из '+waterGoal) : (w+' мл · добавь вес в «Замерах» для нормы');
+  const wd=document.getElementById('waterDone'); if(wd) wd.style.display=w>=waterGoal?'flex':'none';
+}
+let waterSaveT;
+function addWater(ml){
+  const before=TODAY.water||0;
+  TODAY.water=Math.max(0, before+ml);
+  renderWater();
+  clearTimeout(waterSaveT); waterSaveT=setTimeout(()=>saveToday(), 600);
+  if(ml>0 && before<waterGoal && TODAY.water>=waterGoal){
+    celebrate('💧','Норма воды выполнена! '+waterGoal+' мл 🫧');
+    pushFeed('выпила свою норму воды 💧 '+(waterGoal/1000).toFixed(1)+' л');
+  } else if(ml>0){ toast('💧','+'+ml+' мл'); }
+}
+function addWaterCustom(){
+  const el=document.getElementById('waterCustom'); const v=parseInt(el.value,10);
+  if(!v||v<=0){toast('✍️','Введи количество в мл');return;}
+  el.value=''; addWater(v);
+}
+
+// ============================================================
+//  ФОТО НА ВЕСЬ ЭКРАН
+// ============================================================
+function openPhoto(url){
+  const lb=document.getElementById('lightbox'); if(!lb)return;
+  document.getElementById('lightboxImg').src=url; lb.classList.add('show');
+  if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.HapticFeedback){try{Telegram.WebApp.HapticFeedback.impactOccurred('light');}catch(e){}}
+}
+function closePhoto(){const lb=document.getElementById('lightbox'); if(lb)lb.classList.remove('show');}
+
+// ============================================================
+//  ОТКАЗЫ / ЧЕЛЛЕНДЖ
+// ============================================================
+function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function refDays(d){try{const s=new Date(d); s.setHours(0,0,0,0); const n=new Date(); n.setHours(0,0,0,0); return Math.floor((n-s)/86400000)+1;}catch(e){return 1;}}
+function dayWord(n){const a=Math.abs(n)%100,b=n%10; if(a>10&&a<20)return 'дней'; if(b===1)return 'день'; if(b>=2&&b<=4)return 'дня'; return 'дней';}
+function refWeekDots(started_on){
+  const start=new Date(started_on); start.setHours(0,0,0,0);
+  const now=new Date(); now.setHours(0,0,0,0);
+  const monday=new Date(now); monday.setDate(now.getDate()-((now.getDay()+6)%7));
+  const arr=[];
+  for(let j=0;j<7;j++){ const d=new Date(monday); d.setDate(monday.getDate()+j); d.setHours(0,0,0,0); arr.push(d>=start && d<=now ? 1 : 0); }
+  return arr;
+}
+
+async function loadRefusals(){
+  const {data,error}=await sb.from('refusals').select('*, profiles(name,avatar,color)').eq('active',true).order('started_on',{ascending:true});
+  if(error){console.error(error);return;}
+  REFUS=data||[];
+}
+function renderRefus(){
+  const mine=REFUS.filter(r=>String(r.user_id)===String(ME.id));
+  const others=REFUS.filter(r=>String(r.user_id)!==String(ME.id));
+  const myBox=document.getElementById('myRefus');
+  const otBox=document.getElementById('otherRefus');
+  if(myBox){
+    myBox.innerHTML = mine.length ? mine.map(r=>{const d=refDays(r.started_on); const days=['Пн','Вт','Ср','Чт','Пт','Сб','Вс']; const todayIdx=(new Date().getDay()+6)%7; const dots=refWeekDots(r.started_on);
+      return `<div class="refitem">
+        <div class="refline">
+          <span class="refem">🚫</span>
+          <b class="reftitle">${escapeHtml(r.title)}</b>
+          <span class="reftot">${d} ${dayWord(d)}</span>
+          <button class="refstop" onclick="stopRefusal('${r.id}')" title="завершить">✕</button>
+        </div>
+        <div class="dots">${dots.map((v,j)=>`<div class="dot ${v?'d':''} ${j===todayIdx?'t':''}">${days[j]}</div>`).join('')}</div>
+      </div>`;}).join('')
+      : '<div class="empty">Пока ничего. Впиши первый отказ — и челлендж пошёл 🌱</div>';
+  }
+  if(otBox){
+    const myTitles=new Set(mine.map(r=>(r.title||'').toLowerCase()));
+    const joinable=others.filter(r=>!myTitles.has((r.title||'').toLowerCase()));
+    otBox.innerHTML = joinable.length ? joinable.map(r=>{const p=r.profiles||PROFILES[r.user_id]||{name:'Подруга',color:'katya'}; const d=refDays(r.started_on);
+      return `<div class="refrow">
+        <div class="refico">💛</div>
+        <div class="refbody"><b>${escapeHtml(r.title)}</b><small>${escapeHtml(p.name||'Подруга')} · ${d} ${dayWord(d)}</small></div>
+        <button class="refjoin" onclick="joinRefusal('${encodeURIComponent(r.title)}')">Со мной!</button>
+      </div>`;}).join('')
+      : '<div class="empty">Тут появятся отказы подруги, к которым можно присоединиться 🤝</div>';
+  }
+}
+async function addRefusal(){
+  const el=document.getElementById('refInput'); const title=(el.value||'').trim();
+  if(!title){toast('✍️','Впиши, от чего отказываешься');return;}
+  el.value='';
+  const {data,error}=await sb.from('refusals').insert({user_id:ME.id,title,started_on:todayKey()}).select('*, profiles(name,avatar,color)').single();
+  if(error){console.error(error);toast('⚠️','Не сохранилось, попробуй ещё');return;}
+  REFUS.push(data); renderRefus();
+  celebrate('🚫','Отказ принят! День 1 пошёл 💪');
+  pushFeed('начала отказ от <b>'+escapeHtml(title)+'</b> 🚫');
+}
+async function joinRefusal(enc){
+  const title=decodeURIComponent(enc);
+  const {data,error}=await sb.from('refusals').insert({user_id:ME.id,title,started_on:todayKey()}).select('*, profiles(name,avatar,color)').single();
+  if(error){console.error(error);toast('⚠️','Не вышло, попробуй ещё');return;}
+  REFUS.push(data); renderRefus();
+  celebrate('🤝','Теперь держитесь вместе! 💛');
+  pushFeed('присоединилась к отказу от <b>'+escapeHtml(title)+'</b> 🤝');
+}
+async function stopRefusal(id){
+  await sb.from('refusals').update({active:false}).eq('id',id);
+  REFUS=REFUS.filter(x=>String(x.id)!==String(id)); renderRefus();
+  toast('🌿','Отказ завершён');
+}
+
+// ============================================================
 //  ДЕМО-РЕЖИМ (вне Telegram / нет связи) — чтобы файл не был пустым
 // ============================================================
 function startDemo(msg){
@@ -721,12 +936,16 @@ function startDemo(msg){
     {id:'d3',user_id:2,text:'отметила <b>ручной массаж</b>',created_at:new Date(Date.now()-3600000).toISOString(),reactions:{},profiles:PROFILES[2]},
   ];
   WEEK={1:[1,1,1,0,0,0,0], 2:[1,1,1,1,0,0,0]};
+  REFUS=[{id:'r1',user_id:2,title:'сахар',started_on:new Date(Date.now()-3*86400000).toISOString().slice(0,10),active:true,profiles:PROFILES[2]}];
   // переопределяем сетевые функции на локальные заглушки
-  saveToday=async()=>{}; loadWeek=async()=>{}; loadFeed=async()=>{};
+  saveToday=async()=>{}; loadWeek=async()=>{}; loadFeed=async()=>{}; loadRefusals=async()=>{};
+  addRefusal=()=>{const el=document.getElementById('refInput');const t=(el.value||'').trim();if(!t){toast('✍️','Впиши, от чего отказываешься');return;}el.value='';REFUS.push({id:'x'+Date.now(),user_id:1,title:t,started_on:todayKey(),active:true,profiles:ME});renderRefus();celebrate('🚫','Отказ принят! (демо)');};
+  joinRefusal=(enc)=>{const t=decodeURIComponent(enc);REFUS.push({id:'x'+Date.now(),user_id:1,title:t,started_on:todayKey(),active:true,profiles:ME});renderRefus();celebrate('🤝','Присоединилась! (демо)');};
+  stopRefusal=(id)=>{REFUS=REFUS.filter(x=>String(x.id)!==String(id));renderRefus();toast('🌿','Отказ завершён');};
   pushFeed=async(t,ph)=>{FEED.unshift({id:'x'+Date.now(),user_id:1,text:t,created_at:new Date().toISOString(),reactions:{},photo_url:ph,profiles:ME}); renderFeed();};
   reactFeed=(id,e)=>{const f=FEED.find(x=>x.id===id);if(f){f.reactions=f.reactions||{};f.reactions[e]=(f.reactions[e]||0)+1;renderFeed();toast(e,'Поддержка!');}};
   addPhoto=(el)=>{const f=el.files[0];if(!f)return;const u=URL.createObjectURL(f);(TODAY.photos=TODAY.photos||[]).push(u);renderPhotos();pushFeed('поделилась фото еды 🍓',u);toast('📸','Фото добавлено');};
-  saveMeasure=async()=>{const w=parseFloat(document.getElementById('m_weight').value);if(!w){toast('⚖️','Введи вес');return;}MEASURES.push({weight:w,created_at:new Date().toISOString()});renderMeasure();celebrate('📏','Замер сохранён (демо)');};
+  saveMeasure=async()=>{const w=parseFloat(document.getElementById('m_weight').value);if(!w){toast('⚖️','Введи вес');return;}MEASURES.push({weight:w,created_at:new Date().toISOString()});renderMeasure();renderWater();celebrate('📏','Замер сохранён (демо)');};
   pickSystem=(k)=>{ME.system=k;renderSettings();renderMeals();refreshHero();toast('🌿','Система: '+SYSTEMS[k].name);};
   renderAll();
   showBanner(msg);
