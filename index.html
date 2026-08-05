@@ -452,7 +452,17 @@ const SYSTEMS = {
   }},
 };
 const CARE = ['Ручной массаж','Сухая щётка','Массаж прибором','Масло для тела','Скраб','Контрастный душ'];
-const ACT  = ['Тренировка дома','Зал','Прыжки','Танцы','Ходьба','Растяжка','Плавание'];
+const ACT  = ['Тренировка дома','Зал','Прыжки','Танцы','Ходьба','Растяжка','Плавание','Дофаминовые шаги'];
+const ACT_PHRASE = {
+  'Тренировка дома':{e:'🏠',p:'дисциплина в деле, горжусь!'},
+  'Зал':{e:'🏋️',p:'зал — это сила, красота!'},
+  'Прыжки':{e:'🤸',p:'кардио на максимум!'},
+  'Танцы':{e:'💃',p:'это заряд и настроение!'},
+  'Ходьба':{e:'👟',p:'каждый шаг в копилку, так держать!'},
+  'Растяжка':{e:'🧘',p:'тело скажет спасибо!'},
+  'Плавание':{e:'🏊',p:'кайф для всего тела!'},
+  'Дофаминовые шаги':{e:'✨',p:'витамин радости получен!'},
+};
 const MEAL_LABEL = {breakfast:'Завтрак', lunch:'Обед', dinner:'Ужин'};
 const MEAS_FIELDS = [['weight','Вес, кг'],['waist','Талия, см'],['hips','Бёдра, см'],['chest','Грудь, см'],['thigh','Бедро, см'],['arm','Рука, см']];
 const REF = {
@@ -672,7 +682,10 @@ async function toggleChip(type,val){
   let added=false;
   if(i>=0){arr.splice(i,1);} else {arr.push(val); added=true;}
   type==='care'?renderCare():renderAct(); await saveToday(); refreshHero();
-  if(added){ await pushFeed(`отметила <b>${val.toLowerCase()}</b>`); celebrate(type==='care'?'🫧':'🔥', type==='care'?'Забота — это тоже прогресс 💛':'Красотка, двигаемся!'); }
+  if(added){
+    if(type==='activity'){ const a=ACT_PHRASE[val]||{e:'🔥',p:'двигаемся, красота!'}; await pushFeed(`отметила <b>${val.toLowerCase()}</b> ${a.e} — ${a.p}`); celebrate(a.e,a.p); }
+    else { await pushFeed(`отметила <b>${val.toLowerCase()}</b>`); celebrate('🫧','Забота — это тоже прогресс 💛'); }
+  }
 }
 function updCareSub(){careSub.textContent=TODAY.care.length? TODAY.care.length+' · '+TODAY.care.join(', '):'Ничего не отмечено';}
 function updActSub(){actSub.textContent=TODAY.activity.length? TODAY.activity.join(', '):'Не отмечено';}
@@ -758,11 +771,11 @@ function measureDeltaText(newWeight){
   if(withW.length<2) return 'сделала первый замер — точка отсчёта поставлена ✅';
   const prev=parseFloat(withW[withW.length-2].weight);
   const diff=+(newWeight-prev).toFixed(1);           // + прибавила, − сбросила
-  if(diff===0) return 'вес без изменений с прошлого замера — держим 💪';
+  if(diff===0) return 'вес тот же, что и в прошлый раз — стабильность это тоже результат, ничего страшного 💪';
   const abs=Math.abs(diff);
   const amount = abs<1 ? Math.round(abs*1000)+' г' : abs.toFixed(1).replace('.',',')+' кг';
   return diff<0 ? ('сбросила '+amount+' с прошлого замера 🔥')
-               : ('прибавила '+amount+' с прошлого замера — бывает, идём дальше 💛');
+               : ('прибавила '+amount+' с прошлого замера — ничего страшного, бывает, идём дальше 💛');
 }
 async function saveMeasure(){
   const w=parseFloat(document.getElementById('m_weight').value);
