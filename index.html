@@ -656,8 +656,9 @@ async function addPhoto(el){
   const f=el.files[0]; if(!f)return;
   toast('⏳','Загружаю фото…');
   try{
+    const blob=await toJpeg(f);                 // нормализуем формат (HEIC→JPEG) и размер
     const path=`${ME.id}/${Date.now()}_${Math.random().toString(36).slice(2,7)}.jpg`;
-    const up=await sb.storage.from('food').upload(path,f,{contentType:f.type||'image/jpeg'});
+    const up=await sb.storage.from('food').upload(path,blob,{contentType:'image/jpeg'});
     if(up.error) throw up.error;
     const {data}=sb.storage.from('food').getPublicUrl(path);
     const url=data.publicUrl;
@@ -665,6 +666,24 @@ async function addPhoto(el){
     await pushFeed('поделилась фото еды 🍓', url);
     toast('📸','Фото добавлено — Катя увидит в ленте');
   }catch(e){ console.error(e); toast('⚠️','Не вышло загрузить фото'); }
+  finally{ el.value=''; }                        // сброс, чтобы можно было выбрать то же фото ещё раз
+}
+
+function toJpeg(file, maxSide=1600, quality=0.85){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let w=img.width, h=img.height;
+      if(Math.max(w,h)>maxSide){ const k=maxSide/Math.max(w,h); w=Math.round(w*k); h=Math.round(h*k); }
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      c.toBlob(b=> b?resolve(b):reject(new Error('toBlob failed')), 'image/jpeg', quality);
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error('image load failed')); };
+    img.src=url;
+  });
 }
 function renderPhotos(){const box=document.getElementById('foodPhotos'); if(!box)return; box.innerHTML=(TODAY.photos||[]).map(u=>`<img src="${u}" onclick="openPhoto('${u}')">`).join('');}
 
