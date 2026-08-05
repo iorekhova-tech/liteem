@@ -752,6 +752,18 @@ function renderMeasure(){
   } else spark.innerHTML='<div class="empty" style="width:100%">Первый замер — 3 августа 🌱</div>';
   measGrid.innerHTML=MEAS_FIELDS.map(([k,l])=>`<div class="field"><label>${l}</label><div class="gramin"><input type="number" inputmode="decimal" id="m_${k}" placeholder="0"><span>${k==='weight'?'кг':'см'}</span></div></div>`).join('');
 }
+function measureDeltaText(newWeight){
+  const withW=(MEASURES||[]).filter(m=>m.weight!=null && !isNaN(parseFloat(m.weight)));
+  withW.sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
+  if(withW.length<2) return 'сделала первый замер — точка отсчёта поставлена ✅';
+  const prev=parseFloat(withW[withW.length-2].weight);
+  const diff=+(newWeight-prev).toFixed(1);           // + прибавила, − сбросила
+  if(diff===0) return 'вес без изменений с прошлого замера — держим 💪';
+  const abs=Math.abs(diff);
+  const amount = abs<1 ? Math.round(abs*1000)+' г' : abs.toFixed(1).replace('.',',')+' кг';
+  return diff<0 ? ('сбросила '+amount+' с прошлого замера 🔥')
+               : ('прибавила '+amount+' с прошлого замера — бывает, идём дальше 💛');
+}
 async function saveMeasure(){
   const w=parseFloat(document.getElementById('m_weight').value);
   if(!w){toast('⚖️','Введи хотя бы вес');return;}
@@ -761,8 +773,8 @@ async function saveMeasure(){
   const {data,error}=await sb.from('measures').insert(row).select().single();
   if(error){console.error(error);toast('⚠️','Не сохранилось');return;}
   MEASURES.push(data); renderMeasure(); renderWater();
-  celebrate('📏','Замер сохранён — виден только тебе 🔒');
-  await pushFeed('внесла замер недели ✅'); // виден факт, цифры — нет
+  celebrate('📏','Замер сохранён · в группу ушла только разница, цифры скрыты 🔒');
+  await pushFeed(measureDeltaText(w)); // только разница, сама цифра скрыта
 }
 
 // ---- settings ----
