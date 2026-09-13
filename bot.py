@@ -71,7 +71,8 @@ def send_photo(chat_id, photo, caption):
  
 # ---------------- данные ----------------
 def profiles():
-    return {str(r["id"]): r for r in sb_get("profiles?select=id,name")}
+    # select=* — чтобы бот не падал, если новые колонки (sweet_limit, kcal_goal) ещё не добавлены
+    return {str(r["id"]): r for r in sb_get("profiles?select=*")}
  
 def latest_weights():
     out = {}
@@ -168,8 +169,16 @@ def mode_evening():
         d = logs.get(uid) or {}
         wins = []
         meals = d.get("meals") or {}
-        if any((meals.get(m) or {}).get("base") for m in ("breakfast", "lunch", "dinner")):
+        food = meals.get("food") or []
+        if food:
+            kcal = sum(int(f.get("kcal") or 0) for f in food)
+            goal = p.get("kcal_goal") or 1500
+            wins.append(f"уложилась в {goal} ккал 🍽️" if kcal <= goal else "записала питание 🍽️")
+        elif any((meals.get(m) or {}).get("base") for m in ("breakfast", "lunch", "dinner")):
             wins.append("отметила питание 🍽️")
+        sweet = int(meals.get("sweet") or 0)
+        if 0 < sweet <= (p.get("sweet_limit") or 100):
+            wins.append("сладкое в норме 🍬")
         if d.get("care"):     wins.append("уход за собой 🫧")
         if d.get("activity"): wins.append("активность 💪")
         if (d.get("steps") or 0) >= 8000: wins.append("прошла 8000 шагов 👟")
@@ -219,7 +228,6 @@ MODES = {
 }
 SCHEDULE_MAP = {
     "*/5 * * * *":          "feed",
-    "0 6,9,12,15,18 * * *": "water_remind",
     "0 9,13,17 * * *":      "water_snapshot",
     "0 5 * * *":            "morning",
     "30 18 * * *":          "evening",
