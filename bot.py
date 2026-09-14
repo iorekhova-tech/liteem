@@ -100,11 +100,20 @@ def day_word(n):
  
 # ---------------- режимы ----------------
 def mode_feed():
-    """Новые записи ленты → в общую группу."""
+    """Страховка ленты: основной путь — Edge Function feed-to-tg по вебхуку Supabase.
+    Здесь добираем только то, что вебхук пропустил. Запись сначала забираем
+    (posted_to_tg false → true), и шлём, только если забрали мы, — без дублей."""
     rows = sb_get("feed?posted_to_tg=eq.false"
                   "&select=id,text,photo_url,user_id&order=created_at.asc")
     profs = profiles()
     for f in rows:
+        claimed = http(f"{SB_URL}/rest/v1/feed?id=eq.{f['id']}&posted_to_tg=eq.false&select=id",
+                       method="PATCH",
+                       headers={"apikey": SB_KEY, "Authorization": f"Bearer {SB_KEY}",
+                                "Prefer": "return=representation"},
+                       data={"posted_to_tg": True})
+        if not claimed:       # уже отправила функция или запрос не прошёл
+            continue
         name = (profs.get(str(f.get("user_id"))) or {}).get("name") or "Кто-то"
         caption = f"<b>{name}</b> {f.get('text', '')}"
         if f.get("photo_url"):
@@ -227,7 +236,7 @@ MODES = {
     "evening": mode_evening, "diag": mode_diag,
 }
 SCHEDULE_MAP = {
-    "*/5 * * * *":          "feed",
+    "17 * * * *":           "feed",
     "0 9,13,17 * * *":      "water_snapshot",
     "0 5 * * *":            "morning",
     "30 18 * * *":          "evening",
