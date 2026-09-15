@@ -176,25 +176,37 @@ def mode_evening():
  
     for uid, p in profs.items():
         d = logs.get(uid) or {}
-        wins = []
         meals = d.get("meals") or {}
         food = meals.get("food") or []
+        fmt = lambda n: f"{n:,}".replace(",", " ")
+        ok = lambda cond: " ✅" if cond else ""
+        lower = lambda a: ", ".join(s.lower() for s in a)
+        meal_ru = {"breakfast": "завтрак", "lunch": "обед", "dinner": "ужин"}
+
+        # полный отчёт: каждая строка есть всегда, неотмеченное — «не отмечено»
+        report = []
+        done = [m for m in meal_ru if (meals.get(m) or {}).get("base")]
         if food:
             kcal = sum(int(f.get("kcal") or 0) for f in food)
             goal = p.get("kcal_goal") or 1500
-            wins.append(f"уложилась в {goal} ккал 🍽️" if kcal <= goal else "записала питание 🍽️")
-        elif any((meals.get(m) or {}).get("base") for m in ("breakfast", "lunch", "dinner")):
-            wins.append("отметила питание 🍽️")
+            report.append(f"🍽️ Питание: {fmt(kcal)} из {fmt(goal)} ккал" + ok(kcal <= goal))
+        elif done:
+            report.append(f"🍽️ Питание: {', '.join(meal_ru[m] for m in done)} — {len(done)} из 3"
+                          + ok(len(done) == 3))
+        else:
+            report.append("🍽️ Питание: не отмечено")
         sweet = int(meals.get("sweet") or 0)
-        if 0 < sweet <= (p.get("sweet_limit") or 100):
-            wins.append("сладкое в норме 🍬")
-        if d.get("care"):     wins.append("уход за собой 🫧")
-        if d.get("activity"): wins.append("активность 💪")
+        sweet_lim = p.get("sweet_limit") or 100
+        report.append(f"🍬 Сладкое: {sweet} из {sweet_lim} г" + ok(sweet <= sweet_lim))
+        act = d.get("activity") or []
+        report.append("💪 Активность: " + (lower(act) + " ✅" if act else "не отмечено"))
         steps = int(d.get("steps") or 0)
-        if steps > 0:
-            wins.append(f"прошла {steps:,} шагов".replace(",", " ")
-                        + (" 👟" if steps >= 8000 else f" из 8 000 👟"))
-        if (d.get("water") or 0) >= water_goal(uid, weights): wins.append("выпила норму воды 💧")
+        report.append(f"👟 Шаги: {fmt(steps)} из 8 000" + ok(steps >= 8000))
+        w_goal, w_drunk = water_goal(uid, weights), int(d.get("water") or 0)
+        report.append(f"💧 Вода: {fmt(w_drunk)} из {fmt(w_goal)} мл" + ok(w_drunk >= w_goal))
+        care = d.get("care") or []
+        report.append("🫧 Уход: " + (lower(care) + " ✅" if care else "не отмечено"))
+        anything = food or done or sweet or act or steps or w_drunk or care
  
         streaks = []
         for r in ref_by.get(uid, []):
@@ -206,8 +218,9 @@ def mode_evening():
                 pass
  
         lines = [f"🌙 {p['name']}, подводим итог дня!"]
-        lines.append("Сегодня ты: " + ", ".join(wins) + "." if wins
-                     else "Сегодня без отметок — ничего, завтра начнём заново, ты справишься 🌷")
+        lines += report
+        if not anything:
+            lines.append("Сегодня без отметок — ничего, завтра начнём заново, ты справишься 🌷")
         if streaks:
             lines.append("🔥 " + "; ".join(streaks) + " — так держать!")
         lines.append("Ты умница 💛")

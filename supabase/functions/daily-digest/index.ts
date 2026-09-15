@@ -121,23 +121,34 @@ async function evening() {
 
   for (const [uid, p] of profs) {
     const d = logs.get(uid) ?? {};
-    const wins: string[] = [];
     const meals = d.meals ?? {};
     const food: Row[] = meals.food ?? [];
+    const lower = (a: string[]) => a.map((s) => s.toLowerCase()).join(", ");
+
+    // полный отчёт: каждая строка есть всегда, неотмеченное — «не отмечено»
+    const report: string[] = [];
+    const MEAL_RU: Record<string, string> = { breakfast: "завтрак", lunch: "обед", dinner: "ужин" };
     if (food.length) {
       const kcal = food.reduce((s, f) => s + (parseInt(f.kcal) || 0), 0);
       const goal = p.kcal_goal || 1500;
-      wins.push(kcal <= goal ? `уложилась в ${goal} ккал 🍽️` : "записала питание 🍽️");
-    } else if (["breakfast", "lunch", "dinner"].some((m) => meals[m]?.base)) {
-      wins.push("отметила питание 🍽️");
+      report.push(`🍽️ Питание: ${fmt(kcal)} из ${fmt(goal)} ккал` + (kcal <= goal ? " ✅" : ""));
+    } else {
+      const done = Object.keys(MEAL_RU).filter((m) => meals[m]?.base);
+      report.push(done.length
+        ? `🍽️ Питание: ${done.map((m) => MEAL_RU[m]).join(", ")} — ${done.length} из 3` + (done.length === 3 ? " ✅" : "")
+        : "🍽️ Питание: не отмечено");
     }
     const sweet = parseInt(meals.sweet) || 0;
-    if (sweet > 0 && sweet <= (p.sweet_limit || 100)) wins.push("сладкое в норме 🍬");
-    if (d.care?.length) wins.push("уход за собой 🫧");
-    if (d.activity?.length) wins.push("активность 💪");
+    const sweetLim = p.sweet_limit || 100;
+    report.push(`🍬 Сладкое: ${sweet} из ${sweetLim} г` + (sweet <= sweetLim ? " ✅" : ""));
+    report.push(`💪 Активность: ${d.activity?.length ? lower(d.activity) + " ✅" : "не отмечено"}`);
     const steps = parseInt(d.steps) || 0;
-    if (steps > 0) wins.push(`прошла ${fmt(steps)} шагов` + (steps >= 8000 ? " 👟" : " из 8 000 👟"));
-    if ((d.water || 0) >= waterGoal(uid, weights)) wins.push("выпила норму воды 💧");
+    report.push(`👟 Шаги: ${fmt(steps)} из 8 000` + (steps >= 8000 ? " ✅" : ""));
+    const wGoal = waterGoal(uid, weights), wDrunk = parseInt(d.water) || 0;
+    report.push(`💧 Вода: ${fmt(wDrunk)} из ${fmt(wGoal)} мл` + (wDrunk >= wGoal ? " ✅" : ""));
+    report.push(`🫧 Уход: ${d.care?.length ? lower(d.care) + " ✅" : "не отмечено"}`);
+    const anything = food.length || Object.keys(MEAL_RU).some((m) => meals[m]?.base) ||
+      sweet || d.activity?.length || steps || wDrunk || d.care?.length;
 
     const streaks: string[] = [];
     for (const r of refBy.get(uid) ?? []) {
@@ -148,9 +159,8 @@ async function evening() {
     }
 
     const lines = [`🌙 ${p.name}, подводим итог дня!`];
-    lines.push(wins.length
-      ? "Сегодня ты: " + wins.join(", ") + "."
-      : "Сегодня без отметок — ничего, завтра начнём заново, ты справишься 🌷");
+    lines.push(...report);
+    if (!anything) lines.push("Сегодня без отметок — ничего, завтра начнём заново, ты справишься 🌷");
     if (streaks.length) lines.push("🔥 " + streaks.join("; ") + " — так держать!");
     lines.push("Ты умница 💛");
     await send(CHAT_ID, lines.join("\n"));

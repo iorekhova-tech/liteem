@@ -3,9 +3,9 @@ name: Лайтуем · бот
 on:
   schedule:
     - cron: '17 * * * *'           # раз в час — страховка ленты (основное: вебхук Supabase → feed-to-tg)
-    - cron: '0 9,13,17 * * *'       # 12/16/20 МСК — срез по воде (в группу)
-    - cron: '0 5 * * *'             # 08:00 МСК — утренняя мотивация (в личку)
-    - cron: '30 18 * * *'           # 21:30 МСК — вечерний итог (в группу)
+    # утро 08:00, вечер 21:30 и срез по воде 12/16/20 МСК теперь шлёт Supabase:
+    # pg_cron → Edge Function clever-task (supabase/functions/daily-digest, supabase/cron_daily_digest.sql).
+    # Здесь они остались только ручным запуском — запасной путь, если Supabase подведёт.
   workflow_dispatch:                # ручной запуск для проверки
     inputs:
       mode:
