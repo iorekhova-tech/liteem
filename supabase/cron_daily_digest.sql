@@ -2,6 +2,7 @@
 -- Запускать в SQL Editor один раз. Время pg_cron — UTC, МСК = UTC+3.
 -- <CRON_SECRET> заменить на значение секрета CRON_SECRET функции daily-digest
 -- (настоящее значение в публичную репу не класть).
+-- В дашборде функция задеплоена под именем clever-task — адрес ниже на него.
 
 create extension if not exists pg_cron;
 create extension if not exists pg_net;
@@ -12,19 +13,19 @@ select cron.unschedule(jobname) from cron.job
 
 select cron.schedule('liteem-morning', '0 5 * * *',      -- 08:00 МСК
   $$select net.http_post(
-      url     := 'https://mikubhndfhhtoswletmj.supabase.co/functions/v1/daily-digest',
+      url     := 'https://mikubhndfhhtoswletmj.supabase.co/functions/v1/clever-task',
       headers := '{"Content-Type":"application/json","x-cron-secret":"<CRON_SECRET>"}'::jsonb,
       body    := '{"mode":"morning"}'::jsonb)$$);
 
 select cron.schedule('liteem-evening', '30 18 * * *',    -- 21:30 МСК
   $$select net.http_post(
-      url     := 'https://mikubhndfhhtoswletmj.supabase.co/functions/v1/daily-digest',
+      url     := 'https://mikubhndfhhtoswletmj.supabase.co/functions/v1/clever-task',
       headers := '{"Content-Type":"application/json","x-cron-secret":"<CRON_SECRET>"}'::jsonb,
       body    := '{"mode":"evening"}'::jsonb)$$);
 
 select cron.schedule('liteem-water', '0 9,13,17 * * *',  -- 12:00, 16:00, 20:00 МСК
   $$select net.http_post(
-      url     := 'https://mikubhndfhhtoswletmj.supabase.co/functions/v1/daily-digest',
+      url     := 'https://mikubhndfhhtoswletmj.supabase.co/functions/v1/clever-task',
       headers := '{"Content-Type":"application/json","x-cron-secret":"<CRON_SECRET>"}'::jsonb,
       body    := '{"mode":"water"}'::jsonb)$$);
 
