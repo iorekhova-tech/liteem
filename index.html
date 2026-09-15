@@ -959,7 +959,7 @@ function renderSteps(){const s=TODAY.steps||0; stepN.textContent=s.toLocaleStrin
 function bumpSteps(n){
   TODAY.steps=Math.max(0,(TODAY.steps||0)+n); renderSteps(); refreshHero();
   clearTimeout(stepSaveT); stepSaveT=setTimeout(saveToday,600);
-  if(TODAY.steps>=8000 && TODAY.steps-n<8000){celebrate('👟','8 000 шагов взято!'); pushFeed('прошла 8 000 шагов 👟');}
+  if(TODAY.steps>=8000 && TODAY.steps-n<8000){celebrate('👟','8 000 шагов взято!'); pushFeed(`прошла <b>${TODAY.steps.toLocaleString('ru')}</b> шагов 👟`);}
 }
 
 // ---- hero / ring ----

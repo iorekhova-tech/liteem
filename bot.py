@@ -190,7 +190,10 @@ def mode_evening():
             wins.append("сладкое в норме 🍬")
         if d.get("care"):     wins.append("уход за собой 🫧")
         if d.get("activity"): wins.append("активность 💪")
-        if (d.get("steps") or 0) >= 8000: wins.append("прошла 8000 шагов 👟")
+        steps = int(d.get("steps") or 0)
+        if steps > 0:
+            wins.append(f"прошла {steps:,} шагов".replace(",", " ")
+                        + (" 👟" if steps >= 8000 else f" из 8 000 👟"))
         if (d.get("water") or 0) >= water_goal(uid, weights): wins.append("выпила норму воды 💧")
  
         streaks = []
