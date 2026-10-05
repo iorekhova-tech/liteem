@@ -30,13 +30,18 @@ async function sbGet(path: string): Promise<Row[]> {
   return await r.json();
 }
 
-async function send(chatId: string, text: string) {
+// В личке под сообщением — кнопка, открывающая приложение (web_app-кнопки Telegram пускает только в личку)
+const APP_URL = "https://iorekhova-tech.github.io/liteem/";
+const OPEN_BTN = { inline_keyboard: [[{ text: "🌸 Открыть Лайтуем", web_app: { url: APP_URL } }]] };
+
+async function send(chatId: string, text: string, button = false) {
   if (!chatId) return;
   const r = await fetch(`${TG}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true,
+      ...(button ? { reply_markup: OPEN_BTN } : {}),
     }),
   });
   if (!r.ok) console.log("TG", chatId, r.status, (await r.text()).slice(0, 200));
@@ -103,7 +108,7 @@ const MORNING = [
 async function morning() {
   for (const [uid, p] of await profiles()) {
     const phrase = MORNING[Math.floor(Math.random() * MORNING.length)];
-    await send(uid, `☀️ Доброе утро, ${p.name}!\n\n${phrase}\n\nЗагляни в Лайтуем и отметь первый пункт 🌿`);
+    await send(uid, `☀️ Доброе утро, ${p.name}!\n\n${phrase}\n\nЗагляни в Лайтуем и отметь первый пункт 🌿`, true);
   }
 }
 
@@ -128,14 +133,23 @@ async function evening() {
     // полный отчёт: каждая строка есть всегда, неотмеченное — «не отмечено»
     const report: string[] = [];
     const MEAL_RU: Record<string, string> = { breakfast: "завтрак", lunch: "обед", dinner: "ужин" };
+    const snack = meals.snack?.base ? parseInt(meals.snack.base) || 0 : 0;
     if (food.length) {
       const kcal = food.reduce((s, f) => s + (parseInt(f.kcal) || 0), 0);
       const goal = p.kcal_goal || 1500;
       report.push(`🍽️ Питание: ${fmt(kcal)} из ${fmt(goal)} ккал` + (kcal <= goal ? " ✅" : ""));
+      // БЖУ — если вносила; цель берём из калькулятора КБЖУ (profiles.body)
+      const sum = (k: string) => Math.round(food.reduce((s, f) => s + (Number(f[k]) || 0), 0));
+      if (food.some((f) => f.p || f.f || f.c)) {
+        const b = p.body ?? {};
+        const part = (lbl: string, v: number, g?: number) => `${lbl} ${v}` + (g ? `/${g}` : "");
+        report.push(`   ${part("Б", sum("p"), b.p)} · ${part("Ж", sum("f"), b.f)} · ${part("У", sum("c"), b.c)} г`);
+      }
     } else {
       const done = Object.keys(MEAL_RU).filter((m) => meals[m]?.base);
-      report.push(done.length
-        ? `🍽️ Питание: ${done.map((m) => MEAL_RU[m]).join(", ")} — ${done.length} из 3` + (done.length === 3 ? " ✅" : "")
+      const snackTxt = snack ? ` + перекус${meals.snack.what ? ` (${String(meals.snack.what).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")})` : ""}` : "";
+      report.push(done.length || snack
+        ? `🍽️ Питание: ${done.map((m) => MEAL_RU[m]).join(", ")} — ${done.length} из 3${snackTxt}` + (done.length === 3 ? " ✅" : "")
         : "🍽️ Питание: не отмечено");
     }
     const sweet = parseInt(meals.sweet) || 0;
@@ -147,7 +161,7 @@ async function evening() {
     const wGoal = waterGoal(uid, weights), wDrunk = parseInt(d.water) || 0;
     report.push(`💧 Вода: ${fmt(wDrunk)} из ${fmt(wGoal)} мл` + (wDrunk >= wGoal ? " ✅" : ""));
     report.push(`🫧 Уход: ${d.care?.length ? lower(d.care) + " ✅" : "не отмечено"}`);
-    const anything = food.length || Object.keys(MEAL_RU).some((m) => meals[m]?.base) ||
+    const anything = food.length || snack || Object.keys(MEAL_RU).some((m) => meals[m]?.base) ||
       sweet || d.activity?.length || steps || wDrunk || d.care?.length;
 
     const streaks: string[] = [];
@@ -165,6 +179,117 @@ async function evening() {
     lines.push("Ты умница 💛");
     await send(CHAT_ID, lines.join("\n"));
   }
+  // воскресенье по МСК — следом сводка недели
+  if (new Date(Date.now() + MSK_MS).getUTCDay() === 0) await weekly();
+}
+
+// ---------------- сводка недели (воскресенье, после итога дня) ----------------
+// Питание — по системе каждой: «Считаю калории» — средние ккал и БЖУ, граммовки — сколько приёмов
+// заполнено из 21. Вес — только разница, как в ленте: сами цифры видны лишь хозяйке.
+const avg = (a: number[]) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0);
+async function weekly() {
+  const now = new Date(Date.now() + MSK_MS);
+  const mon = new Date(now); mon.setUTCDate(now.getUTCDate() - ((now.getUTCDay() + 6) % 7));
+  const monKey = mon.toISOString().slice(0, 10), today = todayMsk();
+  const [profs, logs, meas] = await Promise.all([
+    profiles(),
+    sbGet(`daily_logs?log_date=gte.${monKey}&log_date=lte.${today}&select=user_id,log_date,water,steps,meals,care,activity`),
+    sbGet("measures?select=user_id,weight,created_at&order=created_at.asc"),
+  ]);
+  const weights = await latestWeights();
+  const sun = new Date(Date.parse(today)), monD = new Date(Date.parse(monKey));
+  const dm = (d: Date) => `${d.getUTCDate()}.${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  const out: string[] = [`📅 <b>Итоги недели ${dm(monD)}–${dm(sun)}</b>`];
+
+  for (const [uid, p] of profs) {
+    const days = logs.filter((l) => String(l.user_id) === uid);
+    const L: string[] = [`\n<b>${p.name}</b>`];
+    const filled = days.filter((d) => {
+      const m = d.meals ?? {};
+      return (m.food?.length) || ["breakfast", "lunch", "dinner", "snack"].some((k) => m[k]?.base) ||
+        d.activity?.length || d.care?.length || (d.steps || 0) > 0 || (d.water || 0) > 0;
+    }).length;
+    L.push(`✍️ Отмечалась ${filled} из 7 дней`);
+
+    // питание
+    const foodDays = days.filter((d) => d.meals?.food?.length);
+    if (p.system === "kcal" || foodDays.length > days.length / 2) {
+      if (foodDays.length) {
+        const tot = (d: Row, k: string) => (d.meals.food as Row[]).reduce((s, f) => s + (Number(f[k]) || 0), 0);
+        const goal = p.kcal_goal || 1500;
+        const kc = foodDays.map((d) => tot(d, "kcal"));
+        const inNorm = kc.filter((k) => k <= goal).length;
+        L.push(`🍽️ В среднем ${fmt(Math.round(avg(kc)))} из ${fmt(goal)} ккал · в норме ${inNorm} из ${foodDays.length} дн.`);
+        if (foodDays.some((d) => (d.meals.food as Row[]).some((f) => f.p || f.f || f.c))) {
+          const b = p.body ?? {};
+          const a = (k: string) => Math.round(avg(foodDays.map((d) => tot(d, k))));
+          L.push(`   Б ${a("p")}${b.p ? "/" + b.p : ""} · Ж ${a("f")}${b.f ? "/" + b.f : ""} · У ${a("c")}${b.c ? "/" + b.c : ""} г в день`);
+        }
+      } else L.push("🍽️ Питание не записывала");
+    } else {
+      const meals = days.reduce((s, d) => s + ["breakfast", "lunch", "dinner"].filter((k) => d.meals?.[k]?.base).length, 0);
+      const snacks = days.filter((d) => d.meals?.snack?.base).length;
+      L.push(`🍽️ Приёмов пищи ${meals} из 21` + (snacks ? ` · перекусов ${snacks}` : "") + (meals >= 18 ? " ✅" : ""));
+    }
+
+    // сладкое, активность, шаги, вода, уход
+    const lim = p.sweet_limit || 100;
+    const sweetDays = days.map((d) => parseInt(d.meals?.sweet) || 0);
+    const over = sweetDays.filter((x) => x > lim).length;
+    L.push(`🍬 Сладкое в норме ${7 - over} из 7 дн.` + (over ? "" : " ✅"));
+    const acts = days.flatMap((d) => d.activity ?? []);
+    if (acts.length) {
+      const cnt = new Map<string, number>();
+      for (const a of acts) cnt.set(a, (cnt.get(a) ?? 0) + 1);
+      L.push(`💪 Активность ${acts.length} раз: ${[...cnt].map(([a, n]) => `${a.toLowerCase()}${n > 1 ? " ×" + n : ""}`).join(", ")}`);
+    } else L.push("💪 Активность не отмечала");
+    const steps = days.map((d) => parseInt(d.steps) || 0);
+    L.push(`👟 Шаги: в среднем ${fmt(Math.round(steps.reduce((s, x) => s + x, 0) / 7))} в день · цель взята ${steps.filter((x) => x >= 8000).length} из 7`);
+    const wg = waterGoal(uid, weights);
+    L.push(`💧 Вода в норме ${days.filter((d) => (d.water || 0) >= wg).length} из 7 дн.`);
+    const care = days.reduce((s, d) => s + (d.care?.length || 0), 0);
+    if (care) L.push(`🫧 Уход — ${care} раз`);
+
+    // вес за неделю: последний замер недели против последнего до неё — только разница
+    const mine = meas.filter((m) => String(m.user_id) === uid && m.weight != null);
+    const before = mine.filter((m) => String(m.created_at).slice(0, 10) < monKey).at(-1);
+    const thisWeek = mine.filter((m) => String(m.created_at).slice(0, 10) >= monKey).at(-1);
+    if (before && thisWeek) {
+      const d = Math.round((Number(thisWeek.weight) - Number(before.weight)) * 10) / 10;
+      L.push(d < 0 ? `⚖️ Минус ${String(-d).replace(".", ",")} кг за неделю 🔥`
+        : d > 0 ? `⚖️ Плюс ${String(d).replace(".", ",")} кг — бывает, идём дальше 💛` : "⚖️ Вес стабилен");
+    }
+    out.push(L.join("\n"));
+  }
+  out.push("\nНовая неделя — новые галочки. Вы молодцы 💛");
+  // длинное сообщение режем по 4000 знаков (лимит Telegram 4096)
+  let chunk = "";
+  for (const part of out) {
+    if ((chunk + "\n" + part).length > 4000) { await send(CHAT_ID, chunk); chunk = ""; }
+    chunk += (chunk ? "\n" : "") + part;
+  }
+  if (chunk) await send(CHAT_ID, chunk);
+}
+
+// ---------------- напоминание в личку (21:00) ----------------
+// Только тем, у кого день не заполнен; пишем, что именно осталось. Всё отмечено — не беспокоим.
+async function remind() {
+  const [profs, weights, logs] = await Promise.all([profiles(), latestWeights(), todayLogs()]);
+  for (const [uid, p] of profs) {
+    const d = logs.get(uid) ?? {};
+    const m = d.meals ?? {};
+    const miss: string[] = [];
+    const food = m.food?.length || ["breakfast", "lunch", "dinner", "snack"].some((k) => m[k]?.base);
+    if (!food) miss.push("питание");
+    if ((parseInt(d.water) || 0) < waterGoal(uid, weights) / 2) miss.push("воду");
+    if (!d.activity?.length) miss.push("активность");
+    if (!(parseInt(d.steps) || 0)) miss.push("шаги");
+    if (!miss.length) continue;
+    const empty = miss.length >= 4;
+    await send(uid, empty
+      ? `🌙 ${p.name}, сегодня ещё ни одной отметки. До итога дня 3 часа — загляни на минутку, отметь что успела 🌿`
+      : `🌙 ${p.name}, до итога дня 3 часа. Ещё не отмечено: ${miss.join(", ")}. Добьём? 💪`, true);
+  }
 }
 
 async function water() {
@@ -173,7 +298,7 @@ async function water() {
   if (parts.length) await send(CHAT_ID, "💧 Срез по воде:\n" + parts.join("\n"));
 }
 
-const MODES: Record<string, () => Promise<void>> = { morning, evening, water };
+const MODES: Record<string, () => Promise<void>> = { morning, evening, water, weekly, remind };
 
 Deno.serve(async (req) => {
   if (!CRON_SECRET || req.headers.get("x-cron-secret") !== CRON_SECRET) {

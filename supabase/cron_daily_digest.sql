@@ -9,7 +9,7 @@ create extension if not exists pg_net;
 
 -- повторный запуск скрипта не плодит задачи
 select cron.unschedule(jobname) from cron.job
- where jobname in ('liteem-morning', 'liteem-evening', 'liteem-water');
+ where jobname in ('liteem-morning', 'liteem-evening', 'liteem-water', 'liteem-remind');
 
 select cron.schedule('liteem-morning', '0 5 * * *',      -- 08:00 МСК
   $$select net.http_post(
@@ -17,7 +17,7 @@ select cron.schedule('liteem-morning', '0 5 * * *',      -- 08:00 МСК
       headers := '{"Content-Type":"application/json","x-cron-secret":"<CRON_SECRET>"}'::jsonb,
       body    := '{"mode":"morning"}'::jsonb)$$);
 
-select cron.schedule('liteem-evening', '30 18 * * *',    -- 21:30 МСК
+select cron.schedule('liteem-evening', '59 20 * * *',    -- 23:59 МСК: итог, когда день уже закрыт
   $$select net.http_post(
       url     := 'https://mikubhndfhhtoswletmj.supabase.co/functions/v1/clever-task',
       headers := '{"Content-Type":"application/json","x-cron-secret":"<CRON_SECRET>"}'::jsonb,
@@ -28,6 +28,13 @@ select cron.schedule('liteem-water', '0 9,13,17 * * *',  -- 12:00, 16:00, 20:00 
       url     := 'https://mikubhndfhhtoswletmj.supabase.co/functions/v1/clever-task',
       headers := '{"Content-Type":"application/json","x-cron-secret":"<CRON_SECRET>"}'::jsonb,
       body    := '{"mode":"water"}'::jsonb)$$);
+
+select cron.schedule('liteem-remind', '0 18 * * *',      -- 21:00 МСК, в личку тем, у кого день не заполнен
+  $$select net.http_post(
+      url     := 'https://mikubhndfhhtoswletmj.supabase.co/functions/v1/clever-task',
+      headers := '{"Content-Type":"application/json","x-cron-secret":"<CRON_SECRET>"}'::jsonb,
+      body    := '{"mode":"remind"}'::jsonb)$$);
+-- сводка недели — внутри вечернего итога по воскресеньям, отдельной задачи нет
 
 -- проверка: select jobname, schedule, active from cron.job;
 -- история:  select * from cron.job_run_details order by start_time desc limit 10;
