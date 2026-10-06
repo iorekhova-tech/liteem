@@ -715,7 +715,10 @@ async function boot(){
     if(!prof){ hideLoader(); return; }   // новенькая — регистрация, дальше продолжит finishOnboarding
     ME = prof; PROFILES[ME.id]=ME;
     if(PENDING){ EDITED=true; await saveToday(); }  // дошлём то, что не ушло в прошлый раз
-    await Promise.all([loadToday(), loadFeed(), loadMeasures(), loadWeek(), loadRefusals()]);
+    await loadToday();
+    // второстепенное грузим «как получится»: одна сломанная таблица не должна закрывать всё приложение
+    (await Promise.allSettled([loadFeed(), loadMeasures(), loadWeek(), loadRefusals()]))
+      .forEach(r=>{ if(r.status==='rejected') console.error('load', r.reason); });
     renderAll(); hideLoader(); if(!PENDING) netbar(''); cacheSave();
   }catch(e){
     console.error('Supabase error:', e);
@@ -768,7 +771,7 @@ async function finishOnboarding(){
   if(error){console.error(error);toast('⚠️','Не получилось сохранить, попробуй ещё');return;}
   document.getElementById('onb').classList.remove('show');
   ME=data; PROFILES[ME.id]=ME;
-  try{ await Promise.all([loadToday(), loadFeed(), loadMeasures(), loadWeek(), loadRefusals()]); }catch(e){ console.error(e); }
+  await Promise.allSettled([loadToday(), loadFeed(), loadMeasures(), loadWeek(), loadRefusals()]);
   renderAll(); startPolling(); cacheSave();
   celebrate('🌸','Добро пожаловать в Лайтуем!');
   pushFeed('присоединилась к Лайтуем 🌸');
@@ -851,7 +854,7 @@ async function poll(){
   if(DEMO || document.hidden || !ME) return;
   try{
     if(PENDING) await saveToday();
-    await Promise.all([loadFeed(), loadWeek(), loadRefusals()]);
+    await Promise.allSettled([loadFeed(), loadWeek(), loadRefusals()]);
     renderFeed(); renderCompare(); renderRefus(); refreshHeader(); cacheSave();
   }catch(e){ console.error('poll', e); }
 }
@@ -1481,7 +1484,7 @@ function refWeekDots(started_on){
 }
 
 async function loadRefusals(){
-  REFUS = await q(sb.from('refusals').select('*, profiles(name,avatar,color)').eq('active',true).order('started_on',{ascending:true}), 'refusals') || [];
+  REFUS = await q(sb.from('refusals').select('*').eq('active',true).order('started_on',{ascending:true}), 'refusals') || [];
 }
 function renderRefus(){
   const mine=REFUS.filter(r=>String(r.user_id)===String(ME.id));
@@ -1517,7 +1520,7 @@ async function addRefusal(){
   const el=document.getElementById('refInput'); const title=(el.value||'').trim();
   if(!title){toast('✍️','Впиши, от чего отказываешься');return;}
   el.value='';
-  const {data,error}=await sb.from('refusals').insert({user_id:ME.id,title,started_on:todayKey()}).select('*, profiles(name,avatar,color)').single();
+  const {data,error}=await sb.from('refusals').insert({user_id:ME.id,title,started_on:todayKey()}).select('*').single();
   if(error){console.error(error);toast('⚠️','Не сохранилось, попробуй ещё');return;}
   REFUS.push(data); renderRefus();
   celebrate('🚫','Отказ принят! День 1 пошёл 💪');
@@ -1525,7 +1528,7 @@ async function addRefusal(){
 }
 async function joinRefusal(enc){
   const title=decodeURIComponent(enc);
-  const {data,error}=await sb.from('refusals').insert({user_id:ME.id,title,started_on:todayKey()}).select('*, profiles(name,avatar,color)').single();
+  const {data,error}=await sb.from('refusals').insert({user_id:ME.id,title,started_on:todayKey()}).select('*').single();
   if(error){console.error(error);toast('⚠️','Не вышло, попробуй ещё');return;}
   REFUS.push(data); renderRefus();
   celebrate('🤝','Теперь держитесь вместе! 💛');
